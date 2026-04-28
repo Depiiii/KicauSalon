@@ -5,6 +5,19 @@ const { db1, db2 } = require('./db');
 
 app.use(express.json()); 
 
+app.post('/api/register', (req, res) => {
+    const { nama, email, password, no_telepon } = req.body;
+    const query = 'INSERT INTO users (nama, email, password, no_telepon) VALUES (?, ?, ?, ?)';
+    
+    db1.query(query, [nama, email, password, no_telepon], (err, result) => {
+        if (err) {
+            console.error('Error saat register:', err);
+            return res.status(500).send(err);
+        }
+        res.json({ message: 'User berhasil register!', id: result.insertId });
+    });
+});
+
 // --- FITUR KATALOG ---
 app.get('/api/catalog', (req, res) => {
 
@@ -19,36 +32,55 @@ app.get('/api/catalog', (req, res) => {
 
 
 
-
 // --- FITUR STYLIST ---
 app.get('/api/stylist', (req, res) => {
-    // Menggunakan db1
-    db1.query('SELECT * FROM Stylist', (err, results) => {
+    //make db2 punya depipit
+    db2.query('SELECT * FROM Stylist', (err, results) => {
         if (err) {
-            console.error('Error DB1 stylist :', err);
+            console.error('Error DB2 stylist :', err);
             return res.status(500).send(err);
         }
         res.json(results);
     });
 });
 
-// --- FITUR APPOINTMENT(BLOM FIX YAK SI JOIN NYA BELOMM) ---
+//MASIH NYOBA NYOBA
 app.post('/api/appointment', (req, res) => {
-    const {id_appointment, tanggal, no_telp, layanan, harga, status, jam, id_user, id_stylist, nama_stylist, nama_user} = req.body;
-    const query = 'INSERT INTO appointment (id_appointment, tanggal, no_telp, layanan, harga, status, jam, id_user, id_stylist, nama_stylist, nama_user) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const {
+        tanggal, 
+        no_telepon, 
+        layanan, 
+        harga, 
+        status, 
+        jam, 
+        id_user, 
+        id_stylist, 
+        nama_stylist, 
+        nama_user
+    } = req.body;
+
+    // Sekarang kolom no_telepon sudah sama antara DB dan Kode
+    const query = `
+        INSERT INTO appointment 
+        (tanggal, no_telepon, layanan, harga, status, jam, id_user, id_stylist, nama_stylist, nama_user) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
     
-    db1.query(query, [id_appointment, tanggal, no_telp, layanan, harga, status, jam, id_user, id_stylist, nama_stylist, nama_user], (err, result) => {
+    const values = [tanggal, no_telepon, layanan, harga, status, jam, id_user, id_stylist, nama_stylist, nama_user];
+
+    db1.query(query, values, (err, result) => {
         if (err) {
-            console.error('Error DB1 saat insert:', err);
+            console.error('Error DB1 saat insert appointment:', err);
             return res.status(500).send(err);
         }
         res.json({ message: 'Booking berhasil dibuat di DB1!', id: result.insertId });
     });
 });
 
-// --- 4. JALANKAN SERVER ---
+
+//JALANKAN SERVER
 const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`Server KicauSalon jalan di http://localhost:${PORT}`);
-    console.log('Terkoneksi ke dua database Railway sekaligus!');
+    console.log('Terkoneksi ke DB1 (User/Booking) dan DB2 (Katalog/Stylist)');
 });
