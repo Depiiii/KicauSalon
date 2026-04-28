@@ -1,16 +1,16 @@
 const express = require('express');
 const app = express();
-// Perhatikan: sekarang kita ambil db1 dan db2 dari file db.js
+
 const { db1, db2 } = require('./db'); 
 
 app.use(express.json()); 
 
 // --- FITUR KATALOG ---
 app.get('/api/catalog', (req, res) => {
-    // Menggunakan db2 karena tabel katalog ada di sana
-    db2.query('SELECT * FROM catalogs', (err, results) => {
+
+    db2.query('SELECT * FROM katalog', (err, results) => {
         if (err) {
-            console.error('Error DB2:', err);
+            console.error('Error DB2 katalog :', err);
             return res.status(500).send(err);
         }
         res.json(results);
@@ -20,24 +20,24 @@ app.get('/api/catalog', (req, res) => {
 
 
 
-// --- FITUR STYLISH ---
-app.get('/api/stylish', (req, res) => {
+// --- FITUR STYLIST ---
+app.get('/api/stylist', (req, res) => {
     // Menggunakan db1
-    db1.query('SELECT * FROM stylish', (err, results) => {
+    db1.query('SELECT * FROM Stylist', (err, results) => {
         if (err) {
-            console.error('Error DB1:', err);
+            console.error('Error DB1 stylist :', err);
             return res.status(500).send(err);
         }
         res.json(results);
     });
 });
 
-// --- FITUR APPOINTMENT ---
+// --- FITUR APPOINTMENT(BLOM FIX YAK SI JOIN NYA BELOMM) ---
 app.post('/api/appointment', (req, res) => {
-    const { id_user, id_catalog, id_stylish, tanggal, jam } = req.body;
-    const query = 'INSERT INTO appointments (id_user, id_catalog, id_stylish, tanggal, jam) VALUES (?, ?, ?, ?, ?)';
+    const {id_appointment, tanggal, no_telp, layanan, harga, status, jam, id_user, id_stylist, nama_stylist, nama_user} = req.body;
+    const query = 'INSERT INTO appointment (id_appointment, tanggal, no_telp, layanan, harga, status, jam, id_user, id_stylist, nama_stylist, nama_user) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     
-    db1.query(query, [id_user, id_catalog, id_stylish, tanggal, jam], (err, result) => {
+    db1.query(query, [id_appointment, tanggal, no_telp, layanan, harga, status, jam, id_user, id_stylist, nama_stylist, nama_user], (err, result) => {
         if (err) {
             console.error('Error DB1 saat insert:', err);
             return res.status(500).send(err);
