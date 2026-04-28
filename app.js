@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 
-const { db1, db2 } = require('./db'); 
+const { db1, db2, db3 } = require('./db'); 
 
 app.use(express.json()); 
 
@@ -60,31 +60,95 @@ app.get('/api/users', (req, res) => {
 });
 
 
-// --- FITUR KATALOG ---
+// --- FITUR GET KATALOG (Sudah JOIN dengan Stylist) ---
+/*app.get('/api/catalog', (req, res) => {
+    // Kita gabungkan tabel katalog dan Stylist berdasarkan id_stylist
+    const query = `
+        SELECT katalog.*, Stylist.nama_stylist 
+        FROM katalog 
+        JOIN Stylist ON katalog.id_stylist = Stylist.id_stylist
+    `;
+
+    db2.query(query, (err, results) => {
+        if (err) {
+            console.error('Error DB2 ambil katalog:', err);
+            return res.status(500).send(err);
+        }
+        res.json(results);
+    });
+}); 
+*/
+
+// --- FITUR GET KATALOG (Sudah JOIN dengan Stylist) ---
+app.get('/api/catalog', async (req, res) => {
+    try {
+        // 1. Ambil data katalog dari DB2
+        const [katalogRows] = await db2.promise().query('SELECT * FROM katalog');
+        
+        // 2. Ambil data stylist dari DB3
+        const [stylistRows] = await db3.promise().query('SELECT * FROM Stylist');
+
+        // 3. Gabungkan datanya di JavaScript
+        const hasilGabungan = katalogRows.map(kt => {
+            // Cari data stylist yang ID-nya cocok dengan id_stylist di katalog
+            const st = stylistRows.find(s => s.id_stylist === kt.id_stylist);
+            
+            return {
+                id_katalog: kt.id_katalog,
+                nama_layanan: kt.nama_layanan,
+                nama_stylist: st ? st.nama : 'Tidak diketahui',
+                status: st ? st.status : '-',
+                harga: st ? st.harga : 0
+            };
+        });
+
+        res.json(hasilGabungan);
+
+    } catch (err) {
+        console.error('Error gabung DB2 & DB3:', err);
+        res.status(500).send('Gagal mengambil data dari dua database');
+    }
+});
+
+// --- FITUR POST KATALOG (Tambah Layanan Baru) ---
 app.get('/api/catalog', (req, res) => {
+    // SEMUA NAMA TABEL PAKAI HURUF KECIL
+    const query = `
+        SELECT 
+            kt.id_katalog, 
+            kt.nama_layanan, 
+            st.nama AS nama_stylist, 
+            st.status, 
+            st.harga 
+        FROM katalog kt 
+        JOIN stylist st ON kt.id_stylist = st.id_stylist
+    `;
 
-    db2.query('SELECT * FROM katalog', (err, results) => {
+    db2.query(query, (err, results) => {
         if (err) {
-            console.error('Error DB2 katalog :', err);
+            console.error('Error DB2 ambil katalog:', err);
             return res.status(500).send(err);
         }
         res.json(results);
     });
 });
 
+// --- FITUR POST KATALOG (Tambah Layanan Baru) ---
+app.post('/api/catalog', (req, res) => {
+    const { id_stylist, layanan } = req.body; // Ambil cuma 2 data
 
+    // Pastikan di sini cuma ada 2 kolom: id_stylist dan nama_layanan
+    const query = 'INSERT INTO katalog (id_stylist, nama_layanan) VALUES (?, ?)';
 
-// --- FITUR STYLIST ---
-app.get('/api/stylist', (req, res) => {
-    //make db2 punya depipit
-    db2.query('SELECT * FROM Stylist', (err, results) => {
+    db2.query(query, [id_stylist, layanan], (err, result) => {
         if (err) {
-            console.error('Error DB2 stylist :', err);
+            console.error('Error saat tambah katalog:', err);
             return res.status(500).send(err);
         }
-        res.json(results);
+        res.json({ message: 'Katalog berhasil ditambah!', id: result.insertId });
     });
 });
+
 
 //MASIH NYOBA NYOBA
 app.post('/api/appointment', (req, res) => {
