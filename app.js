@@ -17,6 +17,48 @@ app.post('/api/register', (req, res) => {
         res.json({ message: 'User berhasil register!', id: result.insertId });
     });
 });
+app.put('/api/users/:id_user', (req, res) => {
+const id = parseInt(req.params.id_user);
+    const { nama, email, password, no_telepon } = req.body;
+
+        console.log('ID:', id);
+    console.log('Body:', req.body);
+
+    if (!id) {
+        return res.status(400).json({ message: 'ID tidak valid' });
+    }
+    const query = `
+        UPDATE users 
+        SET nama = ?, email = ?, password = ?, no_telepon = ?
+        WHERE id_user = ?
+    `;
+
+    db1.query(query, [nama, email, password, no_telepon, id], (err, result) => {
+        if (err) {
+            console.error('Error saat update user:', err);
+            return res.status(500).send(err);
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'User tidak ditemukan' });
+        }
+
+        res.json({ message: 'User berhasil diupdate!' });
+    });
+});
+
+app.get('/api/users', (req, res) => {
+    const id = parseInt(req.params.id_user);
+    const query = 'SELECT * FROM users';
+    db1.query(query, (err, results) => {
+        if (err) {
+            console.error('Error saat mengambil user:', err);
+            return res.status(500).send
+        }(err);
+        res.json(results);
+    });
+});
+
 
 // --- FITUR KATALOG ---
 app.get('/api/catalog', (req, res) => {
