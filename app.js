@@ -113,19 +113,43 @@ app.get('/api/catalog', (req, res) => {
     });
 });
 
-// --- FITUR POST KATALOG (Tambah Layanan Baru) ---
-app.post('/api/catalog', (req, res) => {
-    const { id_stylist, layanan } = req.body; // Ambil cuma 2 data
+// --- FITUR POST KATALOG (Dengan Validasi ID Stylist dari DB3) ---
+app.post('/api/katalog', (req, res) => {
+    const { id_stylist, nama_layanan } = req.body;
 
-    // Pastikan di sini cuma ada 2 kolom: id_stylist dan nama_layanan
-    const query = 'INSERT INTO katalog (id_stylist, nama_layanan) VALUES (?, ?)';
+    // 1. Validasi awal: pastikan data tidak kosong
+    if (!id_stylist || !nama_layanan) {
+        return res.status(400).json({ message: 'ID Stylist dan nama layanan harus diisi' });
+    }
 
-    db2.query(query, [id_stylist, layanan], (err, result) => {
+    // 2. Cek apakah id_stylist ada di DB3 (Tabel Stylist)
+    const checkStylistQuery = 'SELECT id_stylist FROM Stylist WHERE id_stylist = ?';
+    
+    db3.query(checkStylistQuery, [id_stylist], (err, results) => {
         if (err) {
-            console.error('Error saat tambah katalog:', err);
-            return res.status(500).send(err);
+            console.error('Error saat validasi stylist di DB3:', err);
+            return res.status(500).json({ message: 'Gagal memvalidasi stylist', error: err });
         }
-        res.json({ message: 'Katalog berhasil ditambah!', id: result.insertId });
+
+        // Jika hasil query kosong, berarti ID tidak ditemukan
+        if (results.length === 0) {
+            return res.status(404).json({ 
+                message: `Gagal tambah katalog. Stylist dengan ID ${id_stylist} tidak ditemukan!` 
+            });
+        }
+
+        // 3. Jika ID ditemukan, baru jalankan INSERT ke DB2
+        const insertQuery = 'INSERT INTO katalog (id_stylist, nama_layanan) VALUES (?, ?)';
+        db2.query(insertQuery, [id_stylist, nama_layanan], (err, result) => {
+            if (err) {
+                console.error('Error saat tambah katalog ke DB2:', err);
+                return res.status(500).json({ message: 'Gagal input ke database katalog', error: err });
+            }
+            res.json({ 
+                message: 'Katalog berhasil ditambah!', 
+                id_katalog: result.insertId 
+            });
+        });
     });
 });
 
