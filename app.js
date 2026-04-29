@@ -140,6 +140,53 @@ app.post('/api/katalog', (req, res) => {
     });
 });
 
+// --- FITUR EDIT KATALOG ---
+app.put('/api/katalog/:id', (req, res) => {
+    const id_katalog = req.params.id;
+    const { id_stylist, nama_layanan } = req.body;
+
+    if (!id_stylist || !nama_layanan) {
+        return res.status(400).json({ message: 'ID Stylist dan nama layanan harus diisi' });
+    }
+
+    const checkStylistQuery = 'SELECT id_stylist FROM Stylist WHERE id_stylist = ?';
+    
+    db3.query(checkStylistQuery, [id_stylist], (err, results) => {
+        if (err) {
+            console.error('Error saat validasi stylist di DB3:', err);
+            return res.status(500).json({ message: 'Gagal memvalidasi stylist', error: err });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ 
+                message: `Gagal update. Stylist dengan ID ${id_stylist} tidak ditemukan di database!` 
+            });
+        }
+        
+        const updateQuery = `
+            UPDATE katalog 
+            SET id_stylist = ?, nama_layanan = ? 
+            WHERE id_katalog = ?
+        `;
+
+        db2.query(updateQuery, [id_stylist, nama_layanan, id_katalog], (err, result) => {
+            if (err) {
+                console.error('Error saat update katalog di DB2:', err);
+                return res.status(500).json({ message: 'Gagal update database katalog', error: err });
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ message: 'Data katalog tidak ditemukan' });
+            }
+
+            res.json({ 
+                message: 'Katalog berhasil diperbarui!',
+                id_katalog: id_katalog
+            });
+        });
+    });
+});
+
 //  --FITUR DELETE KATALOG --
 app.delete('/katalog/:id', (req, res) => {
     const { id } = req.params;
