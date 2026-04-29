@@ -85,29 +85,6 @@ app.get('/api/katalog', async (req, res) => {
     }
 });
 
-// --- FITUR GET KATALOG ---
-app.get('/api/katalog', (req, res) => {
-    // SEMUA NAMA TABEL PAKAI HURUF KECIL
-    const query = `
-        SELECT 
-            kt.id_katalog, 
-            kt.nama_layanan, 
-            st.nama AS nama_stylist, 
-            st.status, 
-            st.harga 
-        FROM katalog kt 
-        JOIN stylist st ON kt.id_stylist = st.id_stylist
-    `;
-
-    db2.query(query, (err, results) => {
-        if (err) {
-            console.error('Error DB2 ambil katalog:', err);
-            return res.status(500).send(err);
-        }
-        res.json(results);
-    });
-});
-
 // --- FITUR TAMBAH KATALOG ---
 app.post('/api/katalog', (req, res) => {
     const { id_stylist, nama_layanan } = req.body;
@@ -162,7 +139,7 @@ app.put('/api/katalog/:id', (req, res) => {
                 message: `Gagal update. Stylist dengan ID ${id_stylist} tidak ditemukan di database!` 
             });
         }
-        
+
         const updateQuery = `
             UPDATE katalog 
             SET id_stylist = ?, nama_layanan = ? 
