@@ -59,26 +59,6 @@ app.get('/api/users', (req, res) => {
     });
 });
 
-
-// --- FITUR GET KATALOG (Sudah JOIN dengan Stylist) ---
-/*app.get('/api/catalog', (req, res) => {
-    // Kita gabungkan tabel katalog dan Stylist berdasarkan id_stylist
-    const query = `
-        SELECT katalog.*, Stylist.nama_stylist 
-        FROM katalog 
-        JOIN Stylist ON katalog.id_stylist = Stylist.id_stylist
-    `;
-
-    db2.query(query, (err, results) => {
-        if (err) {
-            console.error('Error DB2 ambil katalog:', err);
-            return res.status(500).send(err);
-        }
-        res.json(results);
-    });
-}); 
-*/
-
 // --- FITUR GET KATALOG (Sudah JOIN dengan Stylist) ---
 app.get('/api/catalog', async (req, res) => {
     try {
@@ -201,6 +181,33 @@ app.delete('/api/stylist/:id', (req, res) => {
         });
     });
 });
+
+//  --FITUR DELETE KATALOG --
+app.delete('/katalog/:id', (req, res) => {
+    const { id } = req.params;
+
+    const sql = "DELETE FROM katalog WHERE id_katalog = ?";
+
+    db2.query(sql, [id], (err, result) => {
+        if (err) {
+            return res.status(500).json({
+                message: "Database error",
+                error: err
+            });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                message: "Data tidak ditemukan"
+            });
+        }
+
+        res.json({
+            message: "Data berhasil dihapus",
+            id
+        });
+    });
+}); 
 
 //MASIH NYOBA NYOBA
 app.post('/api/appointment', (req, res) => {
