@@ -224,6 +224,35 @@ app.delete('/api/stylist/:id', (req, res) => {
     });
 });
 
+// --- FITUR EDIT STYLIST ---
+app.put('/api/stylist/:id', (req, res) => {
+    const id = req.params.id; 
+    const { nama, status, harga } = req.body; 
+
+    const sql = "UPDATE Stylist SET nama = ?, status = ?, harga = ? WHERE id_stylist = ?";
+
+    db3.query(sql, [nama, status, harga, id], (err, result) => {
+        if (err) {
+            console.error('Error update stylist:', err);
+            return res.status(500).json({ 
+                message: "Gagal mengubah data", 
+                error: err 
+            });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ 
+                message: "Data stylist tidak ditemukan" 
+            });
+        }
+
+        res.json({ 
+            message: "Data stylist berhasil diubah", 
+            id_diubah: id 
+        });
+    });
+});
+
 
 // -------------------------------------------------------- APPOINTMENT AREA --------------------------------------------------------
 // --- TAMBAH APPOINTMENT ---
