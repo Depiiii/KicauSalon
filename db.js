@@ -27,6 +27,13 @@ const db3 = mysql.createConnection({
     port: process.env.DB3_PORT
 });
 
+const db4 = mysql.createConnection({
+    host: process.env.DB4_HOST,
+    user: process.env.DB4_USER,
+    password: process.env.DB4_PASSWORD,
+    database: process.env.DB4_NAME,
+    port: process.env.DB4_PORT
+});
 
 db1.connect(err => {
     if (err) console.error('Gagal konek ke DB1:', err);
@@ -42,4 +49,8 @@ db3.connect(err => {
     if (err) console.error('Gagal konek ke DB3:', err);
     else console.log('Berhasil konek ke DB3 (Punya Teman)');
 });
-module.exports = { db1, db2, db3 };
+db4.connect(err => {
+    if (err) console.error('Gagal konek ke DB4:', err);
+    else console.log('Berhasil konek ke DB4 (Appoinment)');
+});
+module.exports = { db1, db2, db3, db4 };

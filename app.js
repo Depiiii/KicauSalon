@@ -1,10 +1,11 @@
 const express = require('express');
 const app = express();
 
-const { db1, db2, db3 } = require('./db'); 
+const { db1, db2, db3, db4 } = require('./db'); 
 
 app.use(express.json()); 
-
+// -------------------------------------------------------- USER AREA --------------------------------------------------------
+// FITUR REGISTER USER
 app.post('/api/register', (req, res) => {
     const { nama, email, password, no_telepon } = req.body;
     const query = 'INSERT INTO users (nama, email, password, no_telepon) VALUES (?, ?, ?, ?)';
@@ -17,6 +18,7 @@ app.post('/api/register', (req, res) => {
         res.json({ message: 'User berhasil register!', id: result.insertId });
     });
 });
+// FITUR UPDATE USER
 app.put('/api/users/:id_user', (req, res) => {
 const id = parseInt(req.params.id_user);
     const { nama, email, password, no_telepon } = req.body;
@@ -47,6 +49,7 @@ const id = parseInt(req.params.id_user);
     });
 });
 
+// FITUR GET USER
 app.get('/api/users', (req, res) => {
     const id = parseInt(req.params.id_user);
     const query = 'SELECT * FROM users';
@@ -59,20 +62,14 @@ app.get('/api/users', (req, res) => {
     });
 });
 
-// --- FITUR GET KATALOG (Sudah JOIN dengan Stylist) ---
-app.get('/api/catalog', async (req, res) => {
+// -------------------------------------------------------- KATALOG AREA --------------------------------------------------------
+//GET KATALOG (INI UDH DETAIL JADI GAPERLU DETAIL KATALOG)
+app.get('/api/katalog', async (req, res) => {
     try {
-        // 1. Ambil data katalog dari DB2
         const [katalogRows] = await db2.promise().query('SELECT * FROM katalog');
-        
-        // 2. Ambil data stylist dari DB3
         const [stylistRows] = await db3.promise().query('SELECT * FROM Stylist');
-
-        // 3. Gabungkan datanya di JavaScript
         const hasilGabungan = katalogRows.map(kt => {
-            // Cari data stylist yang ID-nya cocok dengan id_stylist di katalog
             const st = stylistRows.find(s => s.id_stylist === kt.id_stylist);
-            
             return {
                 id_katalog: kt.id_katalog,
                 nama_layanan: kt.nama_layanan,
@@ -81,17 +78,15 @@ app.get('/api/catalog', async (req, res) => {
                 harga: st ? st.harga : 0
             };
         });
-
         res.json(hasilGabungan);
-
     } catch (err) {
         console.error('Error gabung DB2 & DB3:', err);
         res.status(500).send('Gagal mengambil data dari dua database');
     }
 });
 
-// --- FITUR GET KATALOG (Tambah Layanan Baru) ---
-app.get('/api/catalog', (req, res) => {
+// --- FITUR GET KATALOG ---
+app.get('/api/katalog', (req, res) => {
     // SEMUA NAMA TABEL PAKAI HURUF KECIL
     const query = `
         SELECT 
@@ -113,32 +108,24 @@ app.get('/api/catalog', (req, res) => {
     });
 });
 
-// --- FITUR POST KATALOG (Dengan Validasi ID Stylist dari DB3) ---
+// --- FITUR TAMBAH KATALOG ---
 app.post('/api/katalog', (req, res) => {
     const { id_stylist, nama_layanan } = req.body;
 
-    // 1. Validasi awal: pastikan data tidak kosong
     if (!id_stylist || !nama_layanan) {
         return res.status(400).json({ message: 'ID Stylist dan nama layanan harus diisi' });
     }
-
-    // 2. Cek apakah id_stylist ada di DB3 (Tabel Stylist)
     const checkStylistQuery = 'SELECT id_stylist FROM Stylist WHERE id_stylist = ?';
-    
     db3.query(checkStylistQuery, [id_stylist], (err, results) => {
         if (err) {
             console.error('Error saat validasi stylist di DB3:', err);
             return res.status(500).json({ message: 'Gagal memvalidasi stylist', error: err });
         }
-
-        // Jika hasil query kosong, berarti ID tidak ditemukan
         if (results.length === 0) {
             return res.status(404).json({ 
                 message: `Gagal tambah katalog. Stylist dengan ID ${id_stylist} tidak ditemukan!` 
             });
         }
-
-        // 3. Jika ID ditemukan, baru jalankan INSERT ke DB2
         const insertQuery = 'INSERT INTO katalog (id_stylist, nama_layanan) VALUES (?, ?)';
         db2.query(insertQuery, [id_stylist, nama_layanan], (err, result) => {
             if (err) {
@@ -149,59 +136,6 @@ app.post('/api/katalog', (req, res) => {
                 message: 'Katalog berhasil ditambah!', 
                 id_katalog: result.insertId 
             });
-        });
-    });
-});
-
-/// --- FITUR STYLIST ---
-app.get('/api/stylist', (req, res) => {
-    db3.query('SELECT * FROM Stylist', (err, results) =>
-{
-    if (err) {
-        console.error('Error DB stylist :', err);
-        return res.status(500).json({
-            message: 'Gagal mengambil data stylist', error: err }); }
-            res.json(results); }); 
-        });
-
-app.post('/api/stylist', (req, res) => { 
-    const {id_stylist, nama, status, harga} = req.body;      
-
-    const sql = "INSERT INTO Stylist (id_stylist, nama, status, harga) VALUES (?, ?, ?, ?)";
-
-    db3.query(sql, [id_stylist, nama, status, harga], (err, result) => {
-        if (err) { console.error('Error insert stylist :', err); return res.status(500).json
-            ({ message: "Database error", error: err 
-            }); 
-        }
-        res.json({ message: "Insert berhasil", id_disimpan: id_stylist 
-
-        }); 
-    }); 
-});
-
-app.delete('/api/stylist/:id', (req, res) => {
-    const id = req.params.id; 
-    const sql = "DELETE FROM Stylist WHERE id_stylist = ?";
-
-    db3.query(sql, [id], (err, result) => {
-        if (err) {
-            console.error('Error delete stylist:', err);
-            return res.status(500).json({ 
-                message: "Gagal menghapus data", 
-                error: err 
-            });
-        }
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ 
-                message: "Data stylist tidak ditemukan" 
-            });
-        }
-
-        res.json({ 
-            message: "Data stylist berhasil dihapus", 
-            id_terhapus: id 
         });
     });
 });
@@ -233,37 +167,148 @@ app.delete('/katalog/:id', (req, res) => {
     });
 }); 
 
-//MASIH NYOBA NYOBA
-app.post('/api/appointment', (req, res) => {
-    const {
-        tanggal, 
-        no_telepon, 
-        layanan, 
-        harga, 
-        status, 
-        jam, 
-        id_user, 
-        id_stylist, 
-        nama_stylist, 
-        nama_user
-    } = req.body;
+// -------------------------------------------------------- STYLIST AREA --------------------------------------------------------
 
-    // Sekarang kolom no_telepon sudah sama antara DB dan Kode
-    const query = `
-        INSERT INTO appointment 
-        (tanggal, no_telepon, layanan, harga, status, jam, id_user, id_stylist, nama_stylist, nama_user) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-    
-    const values = [tanggal, no_telepon, layanan, harga, status, jam, id_user, id_stylist, nama_stylist, nama_user];
+// --- FITUR GET STYLIST ---
+app.get('/api/stylist', (req, res) => {
+    db3.query('SELECT * FROM Stylist', (err, results) =>
+{
+    if (err) {
+        console.error('Error DB stylist :', err);
+        return res.status(500).json({
+            message: 'Gagal mengambil data stylist', error: err }); }
+            res.json(results); }); 
+        });
 
-    db1.query(query, values, (err, result) => {
-        if (err) {
-            console.error('Error DB1 saat insert appointment:', err);
-            return res.status(500).send(err);
+// --- FITUR TAMBAH STYLIST ---
+app.post('/api/stylist', (req, res) => { 
+    const {id_stylist, nama, status, harga} = req.body;      
+
+    const sql = "INSERT INTO Stylist (id_stylist, nama, status, harga) VALUES (?, ?, ?, ?)";
+
+    db3.query(sql, [id_stylist, nama, status, harga], (err, result) => {
+        if (err) { console.error('Error insert stylist :', err); return res.status(500).json
+            ({ message: "Database error", error: err 
+            }); 
         }
-        res.json({ message: 'Booking berhasil dibuat di DB1!', id: result.insertId });
+        res.json({ message: "Insert berhasil", id_disimpan: id_stylist 
+
+        }); 
+    }); 
+});
+
+// --- FITUR HAPUS STYLIST ---
+app.delete('/api/stylist/:id', (req, res) => {
+    const id = req.params.id; 
+    const sql = "DELETE FROM Stylist WHERE id_stylist = ?";
+
+    db3.query(sql, [id], (err, result) => {
+        if (err) {
+            console.error('Error delete stylist:', err);
+            return res.status(500).json({ 
+                message: "Gagal menghapus data", 
+                error: err 
+            });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ 
+                message: "Data stylist tidak ditemukan" 
+            });
+        }
+
+        res.json({ 
+            message: "Data stylist berhasil dihapus", 
+            id_terhapus: id 
+        });
     });
+});
+
+
+// -------------------------------------------------------- APPOINTMENT AREA --------------------------------------------------------
+// --- TAMBAH APPOINTMENT ---
+app.post('/api/appointment', async (req, res) => {
+    try {
+        const { tanggal, jam, id_user, id_katalog } = req.body;
+
+        if (!tanggal || !jam || !id_user || !id_katalog) {
+            return res.status(400).json({
+                message: "Data tidak lengkap"
+            });
+        }
+
+        const [userData] = await db1.promise().query(
+            'SELECT nama, no_telepon FROM users WHERE id_user = ?',
+            [id_user]
+        );
+
+        if (userData.length === 0) {
+            return res.status(404).json({
+                message: "User tidak ditemukan"
+            });
+        }
+
+        const user = userData[0];
+
+        const [katalogData] = await db2.promise().query(
+            'SELECT * FROM katalog WHERE id_katalog = ?',
+            [id_katalog]
+        );
+
+        if (katalogData.length === 0) {
+            return res.status(404).json({
+                message: "Katalog tidak ditemukan"
+            });
+        }
+
+        const katalog = katalogData[0];
+
+        const [stylistData] = await db3.promise().query(
+            'SELECT * FROM Stylist WHERE id_stylist = ?',
+            [katalog.id_stylist]
+        );
+
+        if (stylistData.length === 0) {
+            return res.status(404).json({
+                message: "Stylist tidak ditemukan"
+            });
+        }
+
+        const stylist = stylistData[0];
+
+        const query = `
+            INSERT INTO appointment
+            (tanggal, Jam, status, id_user, id_katalog, no_telepon, layanan, nama_stylist, harga, nama_user)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        const values = [
+            tanggal,
+            jam,
+            'tidak tersedia',
+            id_user,
+            id_katalog,
+            user.no_telepon,
+            katalog.nama_layanan,
+            stylist.nama,
+            stylist.harga,
+            user.nama
+        ];
+
+        const [result] = await db4.promise().query(query, values);
+
+        res.json({
+            message: "Appointment berhasil dibuat",
+            id: result.insertId
+        });
+
+    } catch (err) {
+        console.error('Error appointment:', err);
+        res.status(500).json({
+            message: "Server error",
+            error: err.message
+        });
+    }
 });
 
 
