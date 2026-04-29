@@ -110,7 +110,7 @@ app.get('/api/catalog', async (req, res) => {
     }
 });
 
-// --- FITUR POST KATALOG (Tambah Layanan Baru) ---
+// --- FITUR GET KATALOG (Tambah Layanan Baru) ---
 app.get('/api/catalog', (req, res) => {
     // SEMUA NAMA TABEL PAKAI HURUF KECIL
     const query = `
@@ -149,6 +149,58 @@ app.post('/api/catalog', (req, res) => {
     });
 });
 
+/// --- FITUR STYLIST ---
+app.get('/api/stylist', (req, res) => {
+    db3.query('SELECT * FROM Stylist', (err, results) =>
+{
+    if (err) {
+        console.error('Error DB stylist :', err);
+        return res.status(500).json({
+            message: 'Gagal mengambil data stylist', error: err }); }
+            res.json(results); }); 
+        });
+
+app.post('/api/stylist', (req, res) => { 
+    const {id_stylist, nama, status, harga} = req.body;      
+
+    const sql = "INSERT INTO Stylist (id_stylist, nama, status, harga) VALUES (?, ?, ?, ?)";
+
+    db3.query(sql, [id_stylist, nama, status, harga], (err, result) => {
+        if (err) { console.error('Error insert stylist :', err); return res.status(500).json
+            ({ message: "Database error", error: err 
+            }); 
+        }
+        res.json({ message: "Insert berhasil", id_disimpan: id_stylist 
+
+        }); 
+    }); 
+});
+
+app.delete('/api/stylist/:id', (req, res) => {
+    const id = req.params.id; 
+    const sql = "DELETE FROM Stylist WHERE id_stylist = ?";
+
+    db3.query(sql, [id], (err, result) => {
+        if (err) {
+            console.error('Error delete stylist:', err);
+            return res.status(500).json({ 
+                message: "Gagal menghapus data", 
+                error: err 
+            });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ 
+                message: "Data stylist tidak ditemukan" 
+            });
+        }
+
+        res.json({ 
+            message: "Data stylist berhasil dihapus", 
+            id_terhapus: id 
+        });
+    });
+});
 
 //MASIH NYOBA NYOBA
 app.post('/api/appointment', (req, res) => {
