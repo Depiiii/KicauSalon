@@ -279,6 +279,38 @@ app.put('/api/stylist/:id', (req, res) => {
 
 
 // -------------------------------------------------------- APPOINTMENT AREA --------------------------------------------------------
+
+// --- GET SEMUA DAFTAR APPOINTMENT ---
+app.get('/api/appointment', async (req, res) => {
+    try {
+        // Kita ambil semua data dari DB4
+        // Urutkan berdasarkan yang paling baru (tanggal DESC)
+        const [rows] = await db4.promise().query(
+            'SELECT * FROM appointment ORDER BY tanggal DESC, Jam DESC'
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({
+                message: 'Belum ada daftar appointment'
+            });
+        }
+
+        res.json({
+            message: 'Daftar appointment berhasil diambil',
+            total: rows.length,
+            data: rows
+        });
+
+    } catch (err) {
+        console.error('Error get appointment:', err);
+        res.status(500).json({
+            message: 'Server error',
+            error: err.message
+        });
+    }
+});
+
+
 // --- TAMBAH APPOINTMENT ---
 app.post('/api/appointment', async (req, res) => {
     try {
