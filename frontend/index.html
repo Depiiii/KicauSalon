@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Login</title>
+<script src="script.js"></script>
+</head>
+
+<body>
+
+<div class="card">
+    <h1>Login KicauSalon</h1>
+
+    <input type="email" placeholder="Email" id="email">
+    <input type="password" placeholder="Password" id="password">
+
+    <button onclick="login()">Login</button>
+
+    <div class="link">
+        Belum punya akun? <a href="register.html">Register</a>
+    </div>
+</div>
+
+</body>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #301712, #2f1713);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card {
+    background: white;
+    padding: 40px;
+    width: 350px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+    transition: 0.2s;
+}
+
+input:focus {
+    border-color: #301712;
+    box-shadow: 0 0 5px rgba(48, 23, 18, 0.3);
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background: #301712;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #4a241c;
+}
+
+.link {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.link a {
+    color: #301712;
+    text-decoration: none;
+    font-weight: bold;
+}
+</style>
+</html>

@@ -1,11 +1,10 @@
 require('dotenv').config();
-
+const cors = require('cors');
 const express = require('express');
 const app = express();
-
 const db = require('./db');
-
 app.use(express.json());
+app.use(cors());
 // -------------------------------------------------------- USER AREA --------------------------------------------------------
 // FITUR REGISTER USER
 app.post('/api/register', (req, res) => {
@@ -20,6 +19,23 @@ app.post('/api/register', (req, res) => {
         res.json({ message: 'User berhasil register!', id: result.insertId });
     });
 });
+
+// FITUR LOGIN USER
+app.post('/api/login', (req, res) => {
+    const { email, password } = req.body;
+    const query = 'SELECT * FROM users WHERE email = ? AND password = ?';
+    db.query(query, [email, password], (err, results) => {
+        if (err) {
+            console.error('Error saat login:', err);
+            return res.status(500).send(err);
+        }
+        if (results.length === 0) {
+            return res.status(401).json({ message: 'Email atau password salah' });
+        }
+        res.json({ message: 'Login berhasil!', user: results[0] });
+    });
+});
+
 // FITUR UPDATE USER
 app.put('/api/users/:id_user', (req, res) => {
 const id = parseInt(req.params.id_user);
