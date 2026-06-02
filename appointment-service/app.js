@@ -4,6 +4,9 @@ const express = require('express');
 const app = express();
 
 const db = require('./db');
+const dbUser = require('../user-service/db');
+const dbKatalog = require('../katalog-service/db');
+const dbStylist = require('../stylist-service/db')
 
 app.use(express.json());
 
