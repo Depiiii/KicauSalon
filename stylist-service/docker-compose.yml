@@ -1,0 +1,18 @@
+services:
+  stylist-service:
+    build: .
+    container_name: stylist_service
+    ports:
+      - "3002:3002"
+    env_file:
+      - .env
+
+  stylist-db:
+    image: mysql:8
+    container_name: stylist_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: stylist_db
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "3308:3306"

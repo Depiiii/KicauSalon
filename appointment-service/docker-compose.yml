@@ -1,0 +1,18 @@
+services:
+  appointment-service:
+    build: .
+    container_name: appointment_service
+    ports:
+      - "3004:3004"
+    env_file:
+      - .env
+
+  appointment-db:
+    image: mysql:8
+    container_name: appointment_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: appointment_db
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "3310:3306"
