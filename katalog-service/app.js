@@ -4,14 +4,15 @@ const express = require('express');
 const app = express();
 
 const db = require('./db');
+const db1 = require('../stylist-service/db');
 
 app.use(express.json());
 // -------------------------------------------------------- KATALOG AREA --------------------------------------------------------
 //GET KATALOG (INI UDH DETAIL JADI GAPERLU DETAIL KATALOG)
 app.get('/api/katalog', async (req, res) => {
     try {
-        const [katalogRows] = await db2.promise().query('SELECT * FROM katalog');
-        const [stylistRows] = await db3.promise().query('SELECT * FROM Stylist');
+        const [katalogRows] = await db.promise().query('SELECT * FROM katalog');
+        const [stylistRows] = await db1.promise().query('SELECT * FROM Stylist');
         const hasilGabungan = katalogRows.map(kt => {
             const st = stylistRows.find(s => s.id_stylist === kt.id_stylist);
             return {
@@ -37,7 +38,7 @@ app.post('/api/katalog', (req, res) => {
         return res.status(400).json({ message: 'ID Stylist dan nama layanan harus diisi' });
     }
     const checkStylistQuery = 'SELECT id_stylist FROM Stylist WHERE id_stylist = ?';
-    db3.query(checkStylistQuery, [id_stylist], (err, results) => {
+    db1.query(checkStylistQuery, [id_stylist], (err, results) => {
         if (err) {
             console.error('Error saat validasi stylist di DB3:', err);
             return res.status(500).json({ message: 'Gagal memvalidasi stylist', error: err });
@@ -48,7 +49,7 @@ app.post('/api/katalog', (req, res) => {
             });
         }
         const insertQuery = 'INSERT INTO katalog (id_stylist, nama_layanan) VALUES (?, ?)';
-        db2.query(insertQuery, [id_stylist, nama_layanan], (err, result) => {
+        db.query(insertQuery, [id_stylist, nama_layanan], (err, result) => {
             if (err) {
                 console.error('Error saat tambah katalog ke DB2:', err);
                 return res.status(500).json({ message: 'Gagal input ke database katalog', error: err });
@@ -72,7 +73,7 @@ app.put('/api/katalog/:id', (req, res) => {
 
     const checkStylistQuery = 'SELECT id_stylist FROM Stylist WHERE id_stylist = ?';
     
-    db3.query(checkStylistQuery, [id_stylist], (err, results) => {
+    db1.query(checkStylistQuery, [id_stylist], (err, results) => {
         if (err) {
             console.error('Error saat validasi stylist di DB3:', err);
             return res.status(500).json({ message: 'Gagal memvalidasi stylist', error: err });
@@ -90,7 +91,7 @@ app.put('/api/katalog/:id', (req, res) => {
             WHERE id_katalog = ?
         `;
 
-        db2.query(updateQuery, [id_stylist, nama_layanan, id_katalog], (err, result) => {
+        db.query(updateQuery, [id_stylist, nama_layanan, id_katalog], (err, result) => {
             if (err) {
                 console.error('Error saat update katalog di DB2:', err);
                 return res.status(500).json({ message: 'Gagal update database katalog', error: err });
@@ -114,7 +115,7 @@ app.delete('/katalog/:id', (req, res) => {
 
     const sql = "DELETE FROM katalog WHERE id_katalog = ?";
 
-    db2.query(sql, [id], (err, result) => {
+    db.query(sql, [id], (err, result) => {
         if (err) {
             return res.status(500).json({
                 message: "Database error",
