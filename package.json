@@ -73,7 +73,7 @@
     "mime-types": "^3.0.2",
     "minimatch": "^10.2.5",
     "ms": "^2.1.3",
-    "mysql2": "^3.22.4",
+    "mysql2": "^3.22.5",
     "named-placeholders": "^1.1.6",
     "negotiator": "^1.0.0",
     "normalize-path": "^3.0.0",
