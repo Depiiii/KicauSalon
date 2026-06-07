@@ -1,6 +1,9 @@
 require('dotenv').config();
 
 const express = require('express');
+const { graphqlHTTP } = require('express-graphql');
+const { buildSchema } = require('graphql');
+
 const app = express();
 
 const db = require('./db');
@@ -8,136 +11,189 @@ const db1 = require('../stylist-service/db');
 
 app.use(express.json());
 // -------------------------------------------------------- KATALOG AREA --------------------------------------------------------
-//GET KATALOG (INI UDH DETAIL JADI GAPERLU DETAIL KATALOG)
-app.get('/api/katalog', async (req, res) => {
+const query = (database, sql, params = []) => {
+  return new Promise((resolve, reject) => {
+    database.query(sql, params, (err, results) => {
+      if (err) return reject(err);
+      resolve(results);
+    });
+  });
+};
+
+const queryPromise = (database, sql, params = []) => {
+  return database.promise().query(sql, params).then(([rows]) => rows);
+};
+
+const schema = buildSchema(`
+
+  # Tipe data Katalog (dengan data join Stylist)
+  type Katalog {
+    id_katalog: ID!
+    nama_layanan: String!
+    nama_stylist: String
+    status: String
+    harga: Float
+  }
+
+  # Tipe data hasil operasi tambah / edit
+  type KatalogMutationResult {
+    message: String!
+    id_katalog: ID!
+    id_stylist: ID
+    nama_layanan: String
+  }
+
+  # Tipe data hasil operasi delete
+  type DeleteResult {
+    message: String!
+    id_katalog: ID!
+  }
+
+  # ---- QUERY ----
+  type Query {
+    # Ambil semua katalog (join dengan data stylist)
+    getAllKatalog: [Katalog!]!
+  }
+
+  # ---- MUTATION ----
+  type Mutation {
+    # Tambah katalog baru
+    addKatalog(
+      id_stylist: ID!
+      nama_layanan: String!
+    ): KatalogMutationResult!
+
+    # Update katalog berdasarkan id
+    updateKatalog(
+      id_katalog: ID!
+      id_stylist: ID!
+      nama_layanan: String!
+    ): KatalogMutationResult!
+
+    # Hapus katalog berdasarkan id
+    deleteKatalog(
+      id_katalog: ID!
+    ): DeleteResult!
+  }
+`);
+db.query('SELECT DATABASE() AS db', (err, rows) => {
+  console.log('DB katalog:', rows);
+});
+
+db1.query('SELECT DATABASE() AS db', (err, rows) => {
+  console.log('DB stylist:', rows);
+});
+const root = {
+     getAllKatalog: async () => {
     try {
-        const [katalogRows] = await db.promise().query('SELECT * FROM katalog');
-        const [stylistRows] = await db1.promise().query('SELECT * FROM Stylist');
-        const hasilGabungan = katalogRows.map(kt => {
-            const st = stylistRows.find(s => s.id_stylist === kt.id_stylist);
-            return {
-                id_katalog: kt.id_katalog,
-                nama_layanan: kt.nama_layanan,
-                nama_stylist: st ? st.nama : 'Tidak diketahui',
-                status: st ? st.status : '-',
-                harga: st ? st.harga : 0
-            };
-        });
-        res.json(hasilGabungan);
+      const katalogRows = await queryPromise(db, 'SELECT * FROM katalog');
+      const stylistRows = await queryPromise(db1, 'SELECT * FROM stylist');
+
+      return katalogRows.map(kt => {
+        const st = stylistRows.find(s => s.id_stylist === kt.id_stylist);
+        return {
+          id_katalog:   kt.id_katalog,
+          nama_layanan: kt.nama_layanan,
+          status:       st ? st.status : '-',
+          harga:        st ? st.harga  : 0
+        };
+      });
     } catch (err) {
-        console.error('Error gabung DB2 & DB3:', err);
-        res.status(500).send('Gagal mengambil data dari dua database');
+      console.error('Error getAllKatalog:', err);
+      throw new Error('Gagal mengambil data katalog');
     }
-});
+  },
 
-// --- FITUR TAMBAH KATALOG ---
-app.post('/api/katalog', (req, res) => {
-    const { id_stylist, nama_layanan } = req.body;
-
+    addKatalog: async ({ id_stylist, nama_layanan }) => {
     if (!id_stylist || !nama_layanan) {
-        return res.status(400).json({ message: 'ID Stylist dan nama layanan harus diisi' });
+      throw new Error('ID Stylist dan nama layanan harus diisi');
     }
-    const checkStylistQuery = 'SELECT id_stylist FROM Stylist WHERE id_stylist = ?';
-    db1.query(checkStylistQuery, [id_stylist], (err, results) => {
-        if (err) {
-            console.error('Error saat validasi stylist di DB3:', err);
-            return res.status(500).json({ message: 'Gagal memvalidasi stylist', error: err });
-        }
-        if (results.length === 0) {
-            return res.status(404).json({ 
-                message: `Gagal tambah katalog. Stylist dengan ID ${id_stylist} tidak ditemukan!` 
-            });
-        }
-        const insertQuery = 'INSERT INTO katalog (id_stylist, nama_layanan) VALUES (?, ?)';
-        db.query(insertQuery, [id_stylist, nama_layanan], (err, result) => {
-            if (err) {
-                console.error('Error saat tambah katalog ke DB2:', err);
-                return res.status(500).json({ message: 'Gagal input ke database katalog', error: err });
-            }
-            res.json({ 
-                message: 'Katalog berhasil ditambah!', 
-                id_katalog: result.insertId 
-            });
-        });
-    });
-});
 
-// --- FITUR EDIT KATALOG ---
-app.put('/api/katalog/:id', (req, res) => {
-    const id_katalog = req.params.id;
-    const { id_stylist, nama_layanan } = req.body;
+    const stylistCheck = await query(
+      db1,
+      'SELECT id_stylist FROM Stylist WHERE id_stylist = ?',
+      [id_stylist]
+    );
 
+    if (stylistCheck.length === 0) {
+      throw new Error(`Gagal tambah katalog. Stylist dengan ID ${id_stylist} tidak ditemukan!`);
+    }
+
+      const result = await query(
+      db,
+      'INSERT INTO katalog (id_stylist, nama_layanan) VALUES (?, ?)',
+      [id_stylist, nama_layanan]
+    );
+
+    return {
+      message:      'Katalog berhasil ditambah!',
+      id_katalog:   result.insertId,
+      id_stylist,
+      nama_layanan
+    };
+  },
+
+    updateKatalog: async ({ id_katalog, id_stylist, nama_layanan }) => {
     if (!id_stylist || !nama_layanan) {
-        return res.status(400).json({ message: 'ID Stylist dan nama layanan harus diisi' });
+      throw new Error('ID Stylist dan nama layanan harus diisi');
     }
 
-    const checkStylistQuery = 'SELECT id_stylist FROM Stylist WHERE id_stylist = ?';
-    
-    db1.query(checkStylistQuery, [id_stylist], (err, results) => {
-        if (err) {
-            console.error('Error saat validasi stylist di DB3:', err);
-            return res.status(500).json({ message: 'Gagal memvalidasi stylist', error: err });
-        }
+    // Validasi stylist ada
+    const stylistCheck = await query(
+      db1,
+      'SELECT id_stylist FROM Stylist WHERE id_stylist = ?',
+      [id_stylist]
+    );
 
-        if (results.length === 0) {
-            return res.status(404).json({ 
-                message: `Gagal update. Stylist dengan ID ${id_stylist} tidak ditemukan di database!` 
-            });
-        }
+    if (stylistCheck.length === 0) {
+      throw new Error(`Gagal update. Stylist dengan ID ${id_stylist} tidak ditemukan di database!`);
+    }
 
-        const updateQuery = `
-            UPDATE katalog 
-            SET id_stylist = ?, nama_layanan = ? 
-            WHERE id_katalog = ?
-        `;
+    // Update katalog
+    const result = await query(
+      db,
+      'UPDATE katalog SET id_stylist = ?, nama_layanan = ? WHERE id_katalog = ?',
+      [id_stylist, nama_layanan, id_katalog]
+    );
 
-        db.query(updateQuery, [id_stylist, nama_layanan, id_katalog], (err, result) => {
-            if (err) {
-                console.error('Error saat update katalog di DB2:', err);
-                return res.status(500).json({ message: 'Gagal update database katalog', error: err });
-            }
+    if (result.affectedRows === 0) {
+      throw new Error(`Data katalog dengan ID ${id_katalog} tidak ditemukan`);
+    }
 
-            if (result.affectedRows === 0) {
-                return res.status(404).json({ message: 'Data katalog tidak ditemukan' });
-            }
+    return {
+      message:      'Katalog berhasil diperbarui!',
+      id_katalog,
+      id_stylist,
+      nama_layanan
+    };
+  },
 
-            res.json({ 
-                message: 'Katalog berhasil diperbarui!',
-                id_katalog: id_katalog
-            });
-        });
-    });
-});
+      deleteKatalog: async ({ id_katalog }) => {
+    const result = await query(
+      db,
+      'DELETE FROM katalog WHERE id_katalog = ?',
+      [id_katalog]
+    );
 
-//  --FITUR DELETE KATALOG --
-app.delete('/katalog/:id', (req, res) => {
-    const { id } = req.params;
+    if (result.affectedRows === 0) {
+      throw new Error(`Data katalog dengan ID ${id_katalog} tidak ditemukan`);
+    }
 
-    const sql = "DELETE FROM katalog WHERE id_katalog = ?";
+    return {
+      message:    'Data berhasil dihapus',
+      id_katalog
+    };
+  }
+};
 
-    db.query(sql, [id], (err, result) => {
-        if (err) {
-            return res.status(500).json({
-                message: "Database error",
-                error: err
-            });
-        }
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({
-                message: "Data tidak ditemukan"
-            });
-        }
-
-        res.json({
-            message: "Data berhasil dihapus",
-            id
-        });
-    });
-}); 
+    app.use('/graphql', graphqlHTTP({
+  schema:    schema,
+  rootValue: root,
+  graphiql:  true 
+}));
 
 const PORT = 3003;
 app.listen(PORT, () => {
-    console.log(`Server KicauSalon jalan di http://localhost:${PORT}`);
-    console.log('Service Katalog berjalan dengan database katalog_db');
+  console.log(`Server KicauSalon jalan di http://localhost:${PORT}/graphql`);
+  console.log('Service Katalog berjalan dengan database katalog_db');
 });
