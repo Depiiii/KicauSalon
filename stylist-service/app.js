@@ -73,7 +73,7 @@ addStylist: ({
         return new Promise((resolve, reject) => {
 
             const sql =
-                "INSERT INTO Stylist (id_stylist, nama, status) VALUES (?, ?, ?)";
+                "INSERT INTO Stylist (id_stylist, nama, status, harga) VALUES (?, ?, ?, ?)";
 
             db.query(
                 sql,
