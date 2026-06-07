@@ -51,7 +51,7 @@ async function login() {
             alert("Login berhasil");
 
             if (result.data.login.role === "admin") {
-                window.location.href = "Admin/admin-dashboard.html";
+                window.location.href = "Admin/appointment-admin.html";
             } else {
                 window.location.href = "dashboard.html";
             }
