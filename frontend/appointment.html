@@ -1,42 +1,177 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <script src="script.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin="anonymous"></script>
-    
-</head>
-<body>
-   <nav class="navbar navbar-expand-lg navbar-dark" style="background:#301712;">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="dashboard.html">KicauSalon</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="katalog.html">katalog</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">appointment</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="riwayat.html">riwayat</a>
-        </li>
-        <a href="profil.html" class="nav-link">profil</a>
-      </ul>
-    </div>
-        <div class="d-flex">
+!DOCTYPE html>
 
-            <a class="btn btn-outline-light" href="index.html" onclick="logout()">logout</a>
+<html class="dark" lang="id">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&amp;family=Hanken+Grotesk:wght@400;500;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        body {
+            background-color: #1d100d;
+            color: #f8ddd7;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Custom scrollbar for data tables */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1d100d;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #504442;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9d8d8a;
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#d0af94",
+                        "surface-elevated": "#3D221D",
+                        "primary-fixed": "#ffdad3",
+                        "secondary-fixed": "#ffdcc1",
+                        "on-tertiary-fixed": "#02201e",
+                        "background": "#1d100d",
+                        "outline-variant": "#504442",
+                        "on-primary-container": "#a47d75",
+                        "status-success": "#2DCC70",
+                        "on-secondary-fixed": "#2a1706",
+                        "tertiary": "#aecdc9",
+                        "surface-container-high": "#362623",
+                        "error-container": "#93000a",
+                        "primary-container": "#301712",
+                        "on-tertiary-fixed-variant": "#304c49",
+                        "error": "#ffb4ab",
+                        "on-surface": "#f8ddd7",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#cae9e5",
+                        "surface-variant": "#42312d",
+                        "primary-fixed-dim": "#e9bcb3",
+                        "on-error": "#690005",
+                        "primary": "#e9bcb3",
+                        "surface-dim": "#1d100d",
+                        "surface": "#1d100d",
+                        "tertiary-container": "#042220",
+                        "inverse-primary": "#79564f",
+                        "on-primary": "#452923",
+                        "on-tertiary-container": "#6e8b88",
+                        "inverse-surface": "#f8ddd7",
+                        "surface-bright": "#463531",
+                        "on-surface-variant": "#d4c3bf",
+                        "text-muted": "#A38F8B",
+                        "on-primary-fixed-variant": "#5f3f38",
+                        "on-secondary": "#412c19",
+                        "surface-container": "#2b1c19",
+                        "on-secondary-fixed-variant": "#5a422d",
+                        "secondary-container": "#5a422d",
+                        "surface-container-lowest": "#180b08",
+                        "on-background": "#f8ddd7",
+                        "status-error": "#E74C3C",
+                        "surface-container-low": "#261815",
+                        "surface-container-highest": "#42312d",
+                        "surface-tint": "#e9bcb3",
+                        "tertiary-fixed-dim": "#aecdc9",
+                        "inverse-on-surface": "#3d2c29",
+                        "on-tertiary": "#193533",
+                        "secondary-fixed-dim": "#e3c0a5",
+                        "secondary": "#e3c0a5",
+                        "on-primary-fixed": "#2d1510",
+                        "outline": "#9d8d8a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1280px",
+                        "unit": "8px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "40px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Playfair Display"],
+                        "table-header": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "headline-md": ["Playfair Display"],
+                        "display-lg-mobile": ["Playfair Display"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "table-header": ["12px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="font-body-md text-body-md bg-background text-on-surface">
+    <!-- TopNavBar (Shared Component) -->
+    <header class="fixed top-0 w-full bg-surface dark:bg-surface border-b border-outline-variant/10 z-50">
+        <div class="flex justify-between items-center h-20 px-margin-desktop max-w-container-max mx-auto">
+            <!-- Brand Logo -->
+            <a class="font-display-lg text-display-lg text-primary dark:text-primary tracking-tight" href="dashboard.html">
+                KicauSalon
+            </a>
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center space-x-8">
+                <a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md"
+                    href="katalog.html">Katalog</a>
+                 <a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md"
+                    href="stylist.html">Stylist</a>
+                <a class="text-secondary font-bold border-b-2 border-secondary pb-1 font-body-md text-body-md"
+                    href="appointment.html">Appointment</a>
+                <a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md"
+                    href="riwayat.html">Riwayat</a>
+                <a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md"
+                    href="profil.html">Profil</a>
+            </nav>
+            <!-- Actions -->
+            <div class="flex items-center space-x-6">
+
+                <a class="font-body-md text-body-md text-on-surface-variant hover:bg-surface-bright/10 px-4 py-2 rounded transition-all duration-200 active:scale-95"
+                    href="index.html" onclick="logout()">
+                    Logout
+                </a>
+            </div>
         </div>
-    </div>
-  </div>
-</nav>
+    </header>
 
 </body>
 </html>
