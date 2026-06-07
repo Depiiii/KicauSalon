@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const cors = require('cors');
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
 
@@ -9,6 +10,8 @@ const app = express();
 const db = require('./db');
 const db1 = require('../stylist-service/db');
 
+
+app.use(cors());
 app.use(express.json());
 // -------------------------------------------------------- KATALOG AREA --------------------------------------------------------
 const query = (database, sql, params = []) => {
@@ -51,9 +54,15 @@ const schema = buildSchema(`
 
   # ---- QUERY ----
   type Query {
-    # Ambil semua katalog (join dengan data stylist)
-    getAllKatalog: [Katalog!]!
-  }
+
+  # Ambil semua katalog
+  getAllKatalog: [Katalog!]!
+
+  # Ambil katalog berdasarkan ID
+  getKatalogById(
+    id_katalog: ID!
+  ): Katalog
+}
 
   # ---- MUTATION ----
   type Mutation {
@@ -91,18 +100,58 @@ const root = {
 
       return katalogRows.map(kt => {
         const st = stylistRows.find(s => s.id_stylist === kt.id_stylist);
-        return {
-          id_katalog:   kt.id_katalog,
-          nama_layanan: kt.nama_layanan,
-          status:       st ? st.status : '-',
-          harga:        st ? st.harga  : 0
-        };
+       return {
+    id_katalog: kt.id_katalog,
+    nama_layanan: kt.nama_layanan,
+    nama_stylist: st ? st.nama : '-',
+    status: st ? st.status : '-',
+    harga: st ? st.harga : 0
+};
       });
     } catch (err) {
       console.error('Error getAllKatalog:', err);
       throw new Error('Gagal mengambil data katalog');
     }
   },
+
+  getKatalogById: async ({ id_katalog }) => {
+  try {
+
+    const katalogRows = await queryPromise(
+      db,
+      'SELECT * FROM katalog WHERE id_katalog = ?',
+      [id_katalog]
+    );
+
+    if (katalogRows.length === 0) {
+      throw new Error(
+        `Katalog dengan ID ${id_katalog} tidak ditemukan`
+      );
+    }
+
+    const kt = katalogRows[0];
+
+    const stylistRows = await queryPromise(
+      db1,
+      'SELECT * FROM stylist WHERE id_stylist = ?',
+      [kt.id_stylist]
+    );
+
+    const st = stylistRows[0];
+
+    return {
+      id_katalog: kt.id_katalog,
+      nama_layanan: kt.nama_layanan,
+      nama_stylist: st ? st.nama : '-',
+      status: st ? st.status : '-',
+      harga: st ? st.harga : 0
+    };
+
+  } catch (err) {
+    console.error('Error getKatalogById:', err);
+    throw new Error('Gagal mengambil data katalog');
+  }
+},
 
     addKatalog: async ({ id_stylist, nama_layanan }) => {
     if (!id_stylist || !nama_layanan) {
