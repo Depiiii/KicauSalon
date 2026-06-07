@@ -1,49 +1,118 @@
-const API_USER = "http://localhost:3001/api";
+const API_GRAPHQL = "http://localhost:3000/graphql";
 
 // LOGIN
-function login() {
+async function login() {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
-    fetch(`${API_USER}/login`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email, password })
-    })
-    .then(res => res.json())
-    .then(data => {
+    const query = `
+        mutation {
+            login(
+                email: "${email}"
+                password: "${password}"
+            ) {
+                token
+                nama
+                role
+            }
+        }
+    `;
 
-        if (data.user && data.user.id_user) {
+    try {
+        const response = await fetch(API_GRAPHQL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                query: query
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.data && result.data.login) {
+
+            localStorage.setItem(
+                "token",
+                result.data.login.token
+            );
+
+            localStorage.setItem(
+                "role",
+                result.data.login.role
+            );
+
+            localStorage.setItem(
+                "nama",
+                result.data.login.nama
+            );
+
             alert("Login berhasil");
 
-            localStorage.setItem("id_user", data.user.id_user);
+            if (result.data.login.role === "admin") {
+                window.location.href = "Admin/admin-dashboard.html";
+            } else {
+                window.location.href = "dashboard.html";
+            }
 
-            window.location.href = "dashboard.html";
         } else {
-            alert(data.message || "Login gagal");
+            alert("Login gagal");
+            console.log(result);
         }
-    });
-}
 
-// REGISTER
-function register() {
+    } catch (error) {
+        console.error(error);
+        alert("Server error");
+    }
+}
+async function register() {
     const nama = document.getElementById("nama").value;
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
     const no_telepon = document.getElementById("no_telepon").value;
 
-    fetch(`${API_USER}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nama, email, password, no_telepon })
-    })
-    .then(res => res.json())
-    .then(() => {
-        alert("Register berhasil");
-        window.location.href = "index.html";
-    });
+    const query = `
+        mutation {
+            register(
+                nama: "${nama}"
+                email: "${email}"
+                password: "${password}"
+                no_telepon: "${no_telepon}"
+            ) {
+                id_user
+                nama
+                email
+                role
+            }
+        }
+    `;
+
+    try {
+        const response = await fetch(API_GRAPHQL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                query: query
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.data && result.data.register) {
+            alert("Register berhasil");
+            window.location.href = "index.html";
+        } else {
+            alert("Register gagal");
+            console.log(result);
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert("Server error");
+    }
 }
 function logout() {
     localStorage.removeItem("id_user");
