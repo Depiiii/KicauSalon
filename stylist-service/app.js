@@ -1,13 +1,14 @@
 require('dotenv').config();
 
 const express = require('express');
+const cors = require('cors');
 const { graphqlHTTP } = require("express-graphql");
 const { buildSchema } = require("graphql");
 const app = express();
 
 const db = require('./db');
 
-
+app.use(cors());
 app.use(express.json());
 
 // -------------------------------------------------------- STYLIST AREA --------------------------------------------------------
@@ -61,6 +62,23 @@ const root = {
             );
         });
     },
+
+// --- GET STYLIST BY ID ---
+getStylistById: ({ id_stylist }) => {
+    return new Promise((resolve, reject) => {
+
+        db.query(
+            "SELECT * FROM Stylist WHERE id_stylist = ?",
+            [id_stylist],
+            (err, results) => {
+
+                if (err) reject(err);
+
+                resolve(results[0]);
+            }
+        );
+    });
+},
 
 
 // --- FITUR TAMBAH STYLIST ---

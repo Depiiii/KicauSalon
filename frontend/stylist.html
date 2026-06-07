@@ -172,6 +172,220 @@
             </div>
         </div>
     </header>
+<!-- CONTENT -->
+    <main class="pt-32 px-10 pb-10">
 
+        <!-- TITLE -->
+        <div class="mb-8">
+            <h1 class="text-5xl font-bold text-[#f8ddd7]">
+                Stylist
+            </h1>
+
+            <p class="text-[#A38F8B] mt-2">
+                KicauSalon list stylist
+            </p>
+        </div>
+
+        <!-- SEARCH -->
+        <div class="mb-6">
+            <input
+                id="searchInput"
+                type="text"
+                placeholder="Search stylist name                                              🔍︎"
+                class="w-full md:w-96 bg-[#2b1c19] border border-[#504442]
+                rounded-lg px-4 py-3 outline-none focus:border-[#e3c0a5]
+                text-white">
+        </div>
+
+        <!-- TABLE -->
+        <div class="overflow-hidden rounded-xl border border-[#504442]">
+
+            <table class="w-full border-collapse">
+
+                <thead class="bg-[#362623] text-[#9d8d8a] uppercase text-sm">
+                    <tr>
+                        <th class="text-left p-5">Nama</th>
+                        <th class="text-left p-5">Status</th>
+                        <th class="text-right p-5">Harga</th>
+                    </tr>
+                </thead>
+
+                <tbody id="stylistTable">
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </main>
+
+    <script>
+
+        const API_URL =
+            "http://localhost:3002/graphql";
+
+        let allStylist = [];
+
+        // ================= GET ALL STYLIST =================
+        async function getAllStylist() {
+
+            try {
+
+                const response =
+                    await fetch(API_URL, {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            query: `
+                                query {
+                                    getAllStylist {
+                                        id_stylist
+                                        nama
+                                        status
+                                        harga
+                                    }
+                                }
+                            `
+                        })
+                    });
+
+                const result =
+                    await response.json();
+
+                console.log(result);
+
+                allStylist =
+                    result.data.getAllStylist;
+
+                renderTable(allStylist);
+
+            } catch (error) {
+
+                console.error(
+                    "Gagal mengambil data:",
+                    error
+                );
+            }
+        }
+
+        // ================= RENDER TABLE =================
+        function renderTable(data) {
+
+            const table =
+                document.getElementById(
+                    "stylistTable"
+                );
+
+            table.innerHTML = "";
+
+            if (data.length === 0) {
+
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="3"
+                            class="text-center py-10 text-gray-400">
+                            Data stylist tidak ditemukan
+                        </td>
+                    </tr>
+                `;
+
+                return;
+            }
+
+            data.forEach(stylist => {
+
+                const initials =
+                    stylist.nama
+                    .split(" ")
+                    .map(word => word[0])
+                    .join("")
+                    .toUpperCase();
+
+                const statusClass =
+                    stylist.status === "Tersedia"
+                    ? "status-tersedia"
+                    : "status-tidak";
+
+                table.innerHTML += `
+
+                    <tr class="table-row border-t border-[#42312d]">
+
+                        <!-- NAMA -->
+                        <td class="p-5">
+
+                            <div class="flex items-center gap-4">
+
+                                <div class="
+                                    w-10 h-10
+                                    rounded-full
+                                    bg-[#5a422d]
+                                    flex
+                                    items-center
+                                    justify-center
+                                    font-bold
+                                ">
+                                    ${initials}
+                                </div>
+
+                                <span class="text-white text-lg">
+                                    ${stylist.nama}
+                                </span>
+
+                            </div>
+
+                        </td>
+
+                        <!-- STATUS -->
+                        <td class="p-5">
+
+                            <span class="${statusClass}">
+                                ${stylist.status}
+                            </span>
+
+                        </td>
+
+                        <!-- HARGA -->
+                        <td class="p-5 text-right text-white font-medium">
+                            Rp ${stylist.harga}
+                        </td>
+
+                    </tr>
+                `;
+            });
+        }
+
+        // ================= SEARCH =================
+        document
+            .getElementById("searchInput")
+            .addEventListener(
+                "input",
+                function () {
+
+                    const keyword =
+                        this.value.toLowerCase();
+
+                    const filtered =
+                        allStylist.filter(
+                            stylist =>
+                            stylist.nama
+                            .toLowerCase()
+                            .includes(keyword)
+                        );
+
+                    renderTable(filtered);
+                }
+            );
+
+        // ================= LOAD DATA =================
+        getAllStylist();
+
+    </script>
+    
 </body>
 </html>
