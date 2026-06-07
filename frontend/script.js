@@ -119,3 +119,4 @@ function logout() {
     alert("Logout berhasil");
     window.location.href = "index.html";
 }
+
