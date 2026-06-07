@@ -1,87 +1,196 @@
 require('dotenv').config();
-const cors = require('cors');
 const express = require('express');
+const { graphqlHTTP } = require('express-graphql');
+const {
+    GraphQLObjectType,
+    GraphQLString,
+    GraphQLInt,
+    GraphQLSchema,
+    GraphQLNonNull
+} = require('graphql');
 const app = express();
+const mysql = require('mysql2');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const cors = require("cors");
+app.use(cors());
+
+
+// Koneksi Database
 const db = require('./db');
 app.use(express.json());
-app.use(cors());
-// -------------------------------------------------------- USER AREA --------------------------------------------------------
-// FITUR REGISTER USER
-app.post('/api/register', (req, res) => {
-    const { nama, email, password, no_telepon } = req.body;
-    const query = 'INSERT INTO users (nama, email, password, no_telepon) VALUES (?, ?, ?, ?)';
-    
-    db.query(query, [nama, email, password, no_telepon], (err, result) => {
-        if (err) {
-            console.error('Error saat register:', err);
-            return res.status(500).send(err);
-        }
-        res.json({ message: 'User berhasil register!', id: result.insertId });
-    });
+
+
+// ================= TYPE =================
+
+const UserType = new GraphQLObjectType({
+    name: 'User',
+    fields: () => ({
+        id_user: { type: GraphQLInt },
+        nama: { type: GraphQLString },
+        email: { type: GraphQLString },
+        no_telepon: { type: GraphQLString },
+        role: { type: GraphQLString }
+    })
 });
 
-// FITUR LOGIN USER
-app.post('/api/login', (req, res) => {
-    const { email, password } = req.body;
-    const query = 'SELECT * FROM users WHERE email = ? AND password = ?';
-    db.query(query, [email, password], (err, results) => {
-        if (err) {
-            console.error('Error saat login:', err);
-            return res.status(500).send(err);
-        }
-        if (results.length === 0) {
-            return res.status(401).json({ message: 'Email atau password salah' });
-        }
-        res.json({ message: 'Login berhasil!', user: results[0] });
-    });
+const LoginType = new GraphQLObjectType({
+    name: 'Login',
+    fields: () => ({
+        token: { type: GraphQLString },
+        nama: { type: GraphQLString },
+        role: { type: GraphQLString }
+    })
 });
 
-// FITUR UPDATE USER
-app.put('/api/users/:id_user', (req, res) => {
-const id = parseInt(req.params.id_user);
-    const { nama, email, password, no_telepon } = req.body;
+// ================= QUERY =================
 
-        console.log('ID:', id);
-    console.log('Body:', req.body);
+const RootQuery = new GraphQLObjectType({
+    name: 'RootQueryType',
+    fields: {
 
-    if (!id) {
-        return res.status(400).json({ message: 'ID tidak valid' });
+        users: {
+            type: require('graphql').GraphQLList(UserType),
+
+            async resolve() {
+                const [rows] = await db.promise().query(
+                    'SELECT * FROM users'
+                );
+
+                return rows;
+            }
+        }
     }
-    const query = `
-        UPDATE users 
-        SET nama = ?, email = ?, password = ?, no_telepon = ?
-        WHERE id_user = ?
-    `;
-
-    db.query(query, [nama, email, password, no_telepon, id], (err, result) => {
-        if (err) {
-            console.error('Error saat update user:', err);
-            return res.status(500).send(err);
-        }
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'User tidak ditemukan' });
-        }
-
-        res.json({ message: 'User berhasil diupdate!' });
-    });
 });
 
-// FITUR GET USER
-app.get('/api/users', (req, res) => {
-    const id = parseInt(req.params.id_user);
-    const query = 'SELECT * FROM users';
-    db.query(query, (err, results) => {
-        if (err) {
-            console.error('Error saat mengambil user:', err);
-            return res.status(500).send
-        }(err);
-        res.json(results);
-    });
+// ================= MUTATION =================
+
+const Mutation = new GraphQLObjectType({
+    name: 'Mutation',
+    fields: {
+
+        // REGISTER USER
+        register: {
+            type: UserType,
+
+            args: {
+                nama: { type: new GraphQLNonNull(GraphQLString) },
+                email: { type: new GraphQLNonNull(GraphQLString) },
+                password: { type: new GraphQLNonNull(GraphQLString) },
+                no_telepon: { type: GraphQLString }
+            },
+
+            async resolve(parent, args) {
+
+                const [cekEmail] = await db.promise().query(
+                    'SELECT * FROM users WHERE email = ?',
+                    [args.email]
+                );
+
+                if (cekEmail.length > 0) {
+                    throw new Error('Email sudah digunakan');
+                }
+
+                const hashedPassword =
+                    await bcrypt.hash(args.password, 10);
+
+                const [result] =
+                    await db.promise().query(
+                        `
+                        INSERT INTO users
+                        (nama,email,password,no_telepon,role)
+                        VALUES (?,?,?,?,?)
+                        `,
+                        [
+                            args.nama,
+                            args.email,
+                            hashedPassword,
+                            args.no_telepon,
+                            'user'
+                        ]
+                    );
+
+                const [user] =
+                    await db.promise().query(
+                        'SELECT * FROM users WHERE id_user = ?',
+                        [result.insertId]
+                    );
+
+                return user[0];
+            }
+        },
+
+        // LOGIN
+        login: {
+            type: LoginType,
+
+            args: {
+                email: { type: new GraphQLNonNull(GraphQLString) },
+                password: { type: new GraphQLNonNull(GraphQLString) }
+            },
+
+            async resolve(parent, args) {
+
+                const [rows] =
+                    await db.promise().query(
+                        'SELECT * FROM users WHERE email = ?',
+                        [args.email]
+                    );
+
+                if (rows.length === 0) {
+                    throw new Error('Email tidak ditemukan');
+                }
+
+                const user = rows[0];
+
+                const cocok =
+                    await bcrypt.compare(
+                        args.password,
+                        user.password
+                    );
+
+                if (!cocok) {
+                    throw new Error('Password salah');
+                }
+
+                const token = jwt.sign(
+                    {
+                        id_user: user.id_user,
+                        role: user.role
+                    },
+                    'SECRETKEY123',
+                    {
+                        expiresIn: '1d'
+                    }
+                );
+
+                return {
+                    token: token,
+                    nama: user.nama,
+                    role: user.role
+                };
+            }
+        }
+    }
 });
 
-const PORT = 3001;
-app.listen(PORT, () => {
-    console.log(`Server KicauSalon jalan di http://localhost:${PORT}`);
-    console.log('Service User berjalan dengan database user_db');
+// ================= SCHEMA =================
+
+const schema = new GraphQLSchema({
+    query: RootQuery,
+    mutation: Mutation
+});
+
+// ================= GRAPHQL =================
+
+app.use('/graphql', graphqlHTTP({
+    schema: schema,
+    graphiql: true
+}));
+
+// ================= SERVER =================
+
+app.listen(3000, () => {
+    console.log('Server berjalan');
+    console.log('http://localhost:3000/graphql');
 });
