@@ -113,152 +113,100 @@ app.post('/api/appointment', async (req, res) => {
 });
 
 // --- UPDATE APPOINTMENT ---
-app.put('/api/appointment/:id', async (req, res) => {
-    try {
-        const id = req.params.id;
-        const { tanggal, jam, id_user, id_katalog, status } = req.body;
-
-        const statusValid = ['Belum Bayar', 'Lunas'];
-        if (status && !statusValid.includes(status)) {
-        return res.status(400).json({ 
-            message: 'Status tidak valid! Pilihan: Belum Bayar / Lunas' 
-        });
-}
-
-        const [appointmentData] = await db4.promise().query(
-            'SELECT * FROM appointment WHERE id_appointment = ?',
-            [id]
-        );
-
-        if (appointmentData.length === 0) {
-            return res.status(404).json({ message: 'Appointment tidak ditemukan' });
-        }
-
-        const existing = appointmentData[0];
-
-        let userFields = {
-            id_user: existing.id_user,
-            nama_user: existing.nama_user,
-            no_telepon: existing.no_telepon
-        };
-
-        if (id_user) {
-            const [userData] = await db1.promise().query(
-                'SELECT nama, no_telepon FROM users WHERE id_user = ?',
-                [id_user]
-            );
-            if (userData.length === 0) {
-                return res.status(404).json({ message: 'User tidak ditemukan' });
-            }
-            userFields = {
-                id_user,
-                nama_user: userData[0].nama,
-                no_telepon: userData[0].no_telepon
-            };
-        }
-
-        let katalogFields = {
-            id_katalog: existing.id_katalog,
-            layanan: existing.layanan,
-            nama_stylist: existing.nama_stylist,
-            harga: existing.harga
-        };
-
-        if (id_katalog) {
-            const [katalogData] = await db2.promise().query(
-                'SELECT * FROM katalog WHERE id_katalog = ?',
-                [id_katalog]
-            );
-            if (katalogData.length === 0) {
-                return res.status(404).json({ message: 'Katalog tidak ditemukan' });
-            }
-
-            const [stylistData] = await db3.promise().query(
-                'SELECT * FROM Stylist WHERE id_stylist = ?',
-                [katalogData[0].id_stylist]
-            );
-            if (stylistData.length === 0) {
-                return res.status(404).json({ message: 'Stylist tidak ditemukan' });
-            }
-
-            katalogFields = {
-                id_katalog,
-                layanan: katalogData[0].nama_layanan,
-                nama_stylist: stylistData[0].nama,
-                harga: stylistData[0].harga
-            };
-        }
-
-        const query = `
-            UPDATE appointment
-            SET tanggal = ?, Jam = ?, status = ?, id_user = ?, id_katalog = ?,
-                no_telepon = ?, layanan = ?, nama_stylist = ?, harga = ?, nama_user = ?
-            WHERE id_appointment = ?
-        `;
-
-        const values = [
-            tanggal      || existing.tanggal,
-            jam          || existing.Jam,
-            status       || existing.status,
-            userFields.id_user,
-            katalogFields.id_katalog,
-            userFields.no_telepon,
-            katalogFields.layanan,
-            katalogFields.nama_stylist,
-            katalogFields.harga,
-            userFields.nama_user,
-            id
-        ];
-
-        await db4.promise().query(query, values);
-
-        res.json({
-            message: 'Appointment berhasil diupdate!',
-            id_appointment: id
-        });
-
-    } catch (err) {
-        console.error('Error update appointment:', err);
-        res.status(500).json({
-            message: 'Server error',
-            error: err.message
-        });
+const updateAppointment = async (_, { id, tanggal, jam, id_user, id_katalog, status }) => {
+    const statusValid = ['Belum Bayar', 'Lunas'];
+    if (status && !statusValid.includes(status)) {
+        throw new Error('Status tidak valid! Pilihan: Belum Bayar / Lunas');
     }
-});
+
+    const [appointmentData] = await db.promise().query(
+        'SELECT * FROM appointment WHERE id_appointment = ?', [id]
+    );
+    if (appointmentData.length === 0) throw new Error('Appointment tidak ditemukan');
+    const existing = appointmentData[0];
+
+    let userFields = {
+        id_user: existing.id_user,
+        nama_user: existing.nama_user,
+        no_telepon: existing.no_telepon
+    };
+    if (id_user) {
+        const [userData] = await dbUser.promise().query(
+            'SELECT nama, no_telepon FROM users WHERE id_user = ?', [id_user]
+        );
+        if (userData.length === 0) throw new Error('User tidak ditemukan');
+        userFields = { id_user, nama_user: userData[0].nama, no_telepon: userData[0].no_telepon };
+    }
+
+    let katalogFields = {
+        id_katalog: existing.id_katalog,
+        layanan: existing.layanan,
+        nama_stylist: existing.nama_stylist,
+        harga: existing.harga
+    };
+    if (id_katalog) {
+        const [katalogData] = await dbKatalog.promise().query(
+            'SELECT * FROM katalog WHERE id_katalog = ?', [id_katalog]
+        );
+        if (katalogData.length === 0) throw new Error('Katalog tidak ditemukan');
+
+        const [stylistData] = await dbStylist.promise().query(
+            'SELECT * FROM Stylist WHERE id_stylist = ?', [katalogData[0].id_stylist]
+        );
+        if (stylistData.length === 0) throw new Error('Stylist tidak ditemukan');
+
+        katalogFields = {
+            id_katalog,
+            layanan: katalogData[0].nama_layanan,
+            nama_stylist: stylistData[0].nama,
+            harga: stylistData[0].harga
+        };
+    }
+
+    await db.promise().query(`
+        UPDATE appointment
+        SET tanggal = ?, Jam = ?, status = ?, id_user = ?, id_katalog = ?,
+            no_telepon = ?, layanan = ?, nama_stylist = ?, harga = ?, nama_user = ?
+        WHERE id_appointment = ?
+    `, [
+        tanggal      || existing.tanggal,
+        jam          || existing.Jam,
+        status       || existing.status,
+        userFields.id_user,
+        katalogFields.id_katalog,
+        userFields.no_telepon,
+        katalogFields.layanan,
+        katalogFields.nama_stylist,
+        katalogFields.harga,
+        userFields.nama_user,
+        id
+    ]);
+
+    return {
+        id_appointment: id,
+        tanggal: tanggal || existing.tanggal,
+        jam: jam || existing.Jam,
+        status: status || existing.status,
+        ...userFields,
+        ...katalogFields
+    };
+};
 
 // --- DELETE APPOINTMENT ---
-app.delete('/api/appointment/:id', async (req, res) => {
-    try {
-        const id = req.params.id;
+const deleteAppointment = async (_, { id }) => {
+    const [appointmentData] = await db.promise().query(
+        'SELECT * FROM appointment WHERE id_appointment = ?', [id]
+    );
+    if (appointmentData.length === 0) throw new Error('Appointment tidak ditemukan');
 
-        const [appointmentData] = await db4.promise().query(
-            'SELECT * FROM appointment WHERE id_appointment = ?',
-            [id]
-        );
+    await db.promise().query(
+        'DELETE FROM appointment WHERE id_appointment = ?', [id]
+    );
 
-        if (appointmentData.length === 0) {
-            return res.status(404).json({ message: 'Appointment tidak ditemukan' });
-        }
+    return { message: 'Appointment berhasil dihapus', id_terhapus: id };
+};
 
-        await db4.promise().query(
-            'DELETE FROM appointment WHERE id_appointment = ?',
-            [id]
-        );
-
-        res.json({
-            message: 'Appointment berhasil dihapus',
-            id_terhapus: id
-        });
-
-    } catch (err) {
-        console.error('Error delete appointment:', err);
-        res.status(500).json({
-            message: 'Server error',
-            error: err.message
-        });
-    }
-});
-
+module.exports = { updateAppointment, deleteAppointment };
 //JALANKAN SERVER
 const PORT = 3004;
 app.listen(PORT, () => {
