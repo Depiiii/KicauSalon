@@ -1,12 +1,13 @@
-!DOCTYPE html>
-
-<html class="dark" lang="id">
-
+<!DOCTYPE html>
+<html lang="id">
 <head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KicauSalon - Katalog</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link
+<link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&amp;family=Hanken+Grotesk:wght@400;500;700&amp;display=swap"
         rel="stylesheet" />
     <link
@@ -15,7 +16,28 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
-    <style>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(61, 34, 29, 0.4);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1d100d;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #504442;
+            border-radius: 2px;
+        }
+        body {
+            background-color: #1d100d;
+        }
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             vertical-align: middle;
@@ -23,7 +45,6 @@
 
         body {
             background-color: #1d100d;
-            color: #f8ddd7;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -46,78 +67,78 @@
             background: #9d8d8a;
         }
     </style>
-    <script id="tailwind-config">
+<script id="tailwind-config">
         tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "on-secondary-container": "#d0af94",
-                        "surface-elevated": "#3D221D",
-                        "primary-fixed": "#ffdad3",
-                        "secondary-fixed": "#ffdcc1",
-                        "on-tertiary-fixed": "#02201e",
-                        "background": "#1d100d",
-                        "outline-variant": "#504442",
-                        "on-primary-container": "#a47d75",
-                        "status-success": "#2DCC70",
-                        "on-secondary-fixed": "#2a1706",
-                        "tertiary": "#aecdc9",
-                        "surface-container-high": "#362623",
-                        "error-container": "#93000a",
-                        "primary-container": "#301712",
-                        "on-tertiary-fixed-variant": "#304c49",
-                        "error": "#ffb4ab",
-                        "on-surface": "#f8ddd7",
-                        "on-error-container": "#ffdad6",
-                        "tertiary-fixed": "#cae9e5",
-                        "surface-variant": "#42312d",
-                        "primary-fixed-dim": "#e9bcb3",
-                        "on-error": "#690005",
-                        "primary": "#e9bcb3",
-                        "surface-dim": "#1d100d",
-                        "surface": "#1d100d",
-                        "tertiary-container": "#042220",
-                        "inverse-primary": "#79564f",
-                        "on-primary": "#452923",
-                        "on-tertiary-container": "#6e8b88",
-                        "inverse-surface": "#f8ddd7",
-                        "surface-bright": "#463531",
-                        "on-surface-variant": "#d4c3bf",
-                        "text-muted": "#A38F8B",
-                        "on-primary-fixed-variant": "#5f3f38",
-                        "on-secondary": "#412c19",
-                        "surface-container": "#2b1c19",
-                        "on-secondary-fixed-variant": "#5a422d",
-                        "secondary-container": "#5a422d",
-                        "surface-container-lowest": "#180b08",
-                        "on-background": "#f8ddd7",
-                        "status-error": "#E74C3C",
-                        "surface-container-low": "#261815",
-                        "surface-container-highest": "#42312d",
-                        "surface-tint": "#e9bcb3",
-                        "tertiary-fixed-dim": "#aecdc9",
-                        "inverse-on-surface": "#3d2c29",
-                        "on-tertiary": "#193533",
-                        "secondary-fixed-dim": "#e3c0a5",
-                        "secondary": "#e3c0a5",
-                        "on-primary-fixed": "#2d1510",
-                        "outline": "#9d8d8a"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.125rem",
-                        "lg": "0.25rem",
-                        "xl": "0.5rem",
-                        "full": "0.75rem"
-                    },
-                    "spacing": {
-                        "container-max": "1280px",
-                        "unit": "8px",
-                        "gutter": "24px",
-                        "margin-mobile": "16px",
-                        "margin-desktop": "40px"
-                    },
-                    "fontFamily": {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary": "#aecdc9",
+                      "tertiary-fixed": "#cae9e5",
+                      "on-primary-fixed": "#2d1510",
+                      "tertiary-container": "#042220",
+                      "inverse-primary": "#79564f",
+                      "background": "#1d100d",
+                      "on-primary": "#452923",
+                      "error": "#ffb4ab",
+                      "on-tertiary-container": "#6e8b88",
+                      "on-secondary-container": "#d0af94",
+                      "tertiary-fixed-dim": "#aecdc9",
+                      "on-surface-variant": "#d4c3bf",
+                      "on-secondary": "#412c19",
+                      "inverse-surface": "#f8ddd7",
+                      "surface-container-high": "#362623",
+                      "primary": "#e9bcb3",
+                      "surface-tint": "#e9bcb3",
+                      "primary-fixed-dim": "#e9bcb3",
+                      "on-secondary-fixed": "#2a1706",
+                      "on-error": "#690005",
+                      "surface-container": "#2b1c19",
+                      "secondary-container": "#5a422d",
+                      "surface": "#1d100d",
+                      "on-primary-fixed-variant": "#5f3f38",
+                      "secondary-fixed": "#ffdcc1",
+                      "primary-container": "#301712",
+                      "on-surface": "#f8ddd7",
+                      "on-tertiary": "#193533",
+                      "inverse-on-surface": "#3d2c29",
+                      "on-primary-container": "#a47d75",
+                      "surface-container-highest": "#42312d",
+                      "status-error": "#E74C3C",
+                      "error-container": "#93000a",
+                      "surface-bright": "#463531",
+                      "outline-variant": "#504442",
+                      "secondary": "#e3c0a5",
+                      "on-background": "#f8ddd7",
+                      "surface-elevated": "#3D221D",
+                      "surface-variant": "#42312d",
+                      "surface-container-low": "#261815",
+                      "status-success": "#2DCC70",
+                      "on-tertiary-fixed": "#02201e",
+                      "on-tertiary-fixed-variant": "#304c49",
+                      "primary-fixed": "#ffdad3",
+                      "on-error-container": "#ffdad6",
+                      "surface-dim": "#1d100d",
+                      "text-muted": "#A38F8B",
+                      "surface-container-lowest": "#180b08",
+                      "secondary-fixed-dim": "#e3c0a5",
+                      "outline": "#9d8d8a",
+                      "on-secondary-fixed-variant": "#5a422d"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "unit": "8px",
+                      "margin-desktop": "40px",
+                      "container-max": "1280px",
+                      "margin-mobile": "16px",
+                      "gutter": "24px"
+              },
+              "fontFamily": {
                         "display-lg": ["Playfair Display"],
                         "table-header": ["Hanken Grotesk"],
                         "body-lg": ["Hanken Grotesk"],
@@ -125,22 +146,23 @@
                         "display-lg-mobile": ["Playfair Display"],
                         "label-sm": ["Hanken Grotesk"],
                         "body-md": ["Hanken Grotesk"]
-                    },
-                    "fontSize": {
-                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
-                        "table-header": ["12px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "700" }],
-                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
-                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
-                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
-                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
-                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
-                    }
-                },
+              },
+              "fontSize": {
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "display-lg-mobile": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                      "table-header": ["12px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                      "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+              }
             },
+          },
         }
     </script>
-</head>
 
+    </style>
+</head>
 <body class="font-body-md text-body-md bg-background text-on-surface">
     <!-- TopNavBar (Shared Component) -->
     <header class="fixed top-0 w-full bg-surface dark:bg-surface border-b border-outline-variant/10 z-50">
@@ -172,6 +194,232 @@
             </div>
         </div>
     </header>
+
+    <!-- Content -->
+     
+    <main class="max-w-7xl mx-auto px-8 py-10 pt-24">
+
+        <h2 class="text-5xl font-bold text-[#e9bcb3] mb-3">
+            Katalog Layanan
+        </h2>
+
+        <p class="text-[#A38F8B] mt-2">
+            Temukan layanan terbaik untuk perawatan rambut Anda.
+        </p>
+
+        <!-- Search -->
+        <div class="mb-10">
+            <input
+                type="text"
+                id="search"
+                placeholder="🔍  Cari layanan..."
+                class="w-full md:w-96 px-4 py-3 rounded-lg bg-[#2b1c19] border border-gray-600">
+        </div>
+
+        <!-- Grid Card -->
+        <div
+            id="katalog-container"
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        </div>
+
+    </main>
+
+    <script>
+
+        async function loadKatalog() {
+
+            try {
+
+                const response = await fetch(
+                    "http://localhost:3003/graphql",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            query: `
+                            query {
+                                getAllKatalog {
+                                    id_katalog
+                                    nama_layanan
+                                    nama_stylist
+                                    harga
+                                    status
+                                }
+                            }
+                            `
+                        })
+                    }
+                );
+
+                const result = await response.json();
+
+                const katalog = result.data.getAllKatalog;
+
+                const container =
+                    document.getElementById("katalog-container");
+
+                container.innerHTML = "";
+
+                katalog.forEach(item => {
+
+                    container.innerHTML += `
+
+                    <div
+                        class="overflow-hidden rounded-xl bg-[#9d8d8a] text-[#504442] shadow-lg hover:scale-105 transition duration-300">
+
+                        <img
+                            src="https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=800"
+                            alt="${item.nama_layanan}"
+                            class="w-full h-60 object-cover">
+
+                        <div class="p-5">
+
+                            <div class="flex justify-between items-center mb-3">
+
+                                <h3 class="text-xl font-bold">
+                                    ${item.nama_layanan}
+                                </h3>
+
+                                <span class="font-bold">
+                                    Rp ${Number(item.harga).toLocaleString('id-ID')}
+                                </span>
+
+                            </div>
+
+                            <p class="mb-4">
+                                Status : ${item.status}
+                            </p>
+
+                            <div class="border-t border-[#1d100d] pt-3 text-sm">
+                                stylist :
+                                ${item.nama_stylist}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    `;
+                });
+
+            } catch (error) {
+
+                console.error(error);
+
+                document.getElementById(
+                    "katalog-container"
+                ).innerHTML = `
+                    <div class="text-red-500">
+                        Gagal mengambil data katalog
+                    </div>
+                `;
+            }
+        }
+
+        loadKatalog();
+
+        let allKatalog = [];
+
+const searchInput = document.getElementById("search");
+const container = document.getElementById("katalog-container");
+
+// ambil data + simpan global
+async function loadKatalog() {
+    try {
+        const response = await fetch("http://localhost:3003/graphql", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                query: `
+                query {
+                    getAllKatalog {
+                        id_katalog
+                        nama_layanan
+                        nama_stylist
+                        harga
+                        status
+                    }
+                }
+                `
+            })
+        });
+
+        const result = await response.json();
+        allKatalog = result.data.getAllKatalog;
+
+        renderKatalog(allKatalog);
+
+    } catch (error) {
+        console.error(error);
+        container.innerHTML = `
+            <div class="text-red-500">
+                Gagal mengambil data katalog
+            </div>
+        `;
+    }
+}
+
+// fungsi render
+function renderKatalog(data) {
+    container.innerHTML = "";
+
+    data.forEach(item => {
+        container.innerHTML += `
+        <div class="overflow-hidden rounded-xl bg-[#9d8d8a] text-[#504442] shadow-lg hover:scale-105 transition duration-300">
+
+            <img src="https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=800"
+                class="w-full h-60 object-cover">
+
+            <div class="p-5">
+
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-xl font-bold">
+                        ${item.nama_layanan}
+                    </h3>
+
+                    <span class="font-bold">
+                        Rp ${Number(item.harga).toLocaleString('id-ID')}
+                    </span>
+                </div>
+
+                <p class="mb-4">
+                    Status : ${item.status}
+                </p>
+
+                <div class="border-t border-[#1d100d] pt-3 text-sm">
+                    stylist : ${item.nama_stylist}
+                </div>
+
+            </div>
+        </div>
+        `;
+    });
+}
+
+// search filter
+searchInput.addEventListener("input", function () {
+    const filtered = allKatalog.filter(item => {
+    const layanan = (item.nama_layanan || "").toLowerCase();
+    const stylist = (item.nama_stylist || "").toLowerCase();
+    const status = (item.status || "").toLowerCase();
+    const keyword = this.value.toLowerCase();
+
+    return (
+        layanan.includes(keyword) ||
+        stylist.includes(keyword) ||
+        status.includes(keyword)
+    );
+});
+
+    renderKatalog(filtered);
+});
+
+loadKatalog();
+</script>
 
 </body>
 </html>
