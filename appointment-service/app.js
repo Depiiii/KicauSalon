@@ -1,215 +1,238 @@
 require('dotenv').config();
 
 const express = require('express');
+const cors = require('cors');
+const { graphqlHTTP } = require("express-graphql");
+const { buildSchema } = require("graphql");
 const app = express();
 
+// Import koneksi database sesuai struktur service
 const db = require('./db');
 const dbUser = require('../user-service/db');
 const dbKatalog = require('../katalog-service/db');
-const dbStylist = require('../stylist-service/db')
+const dbStylist = require('../stylist-service/db');
 
+app.use(cors());
 app.use(express.json());
 
 // -------------------------------------------------------- APPOINTMENT AREA --------------------------------------------------------
-// --- TAMBAH APPOINTMENT ---
-app.post('/api/appointment', async (req, res) => {
-    try {
-        const { tanggal, jam, id_user, id_katalog } = req.body;
 
-        if (!tanggal || jam === undefined || jam === null || !id_user || !id_katalog) {
-            return res.status(400).json({
-                message: "Data tidak lengkap"
-            });
-        }
+// ================= SCHEMA =================
+const schema = buildSchema(`
+    type Appointment {
+        id_appointment: ID!
+        tanggal: String
+        Jam: Int
+        status: String
+        id_user: Int
+        id_katalog: Int
+        no_telepon: String
+        layanan: String
+        nama_stylist: String
+        harga: Float
+        nama_user: String
+    }
 
-        //VALIDASI JAM
-        const jamInt = parseInt(jam);
+    type Query {
+        getAppointments: [Appointment]
+    }
 
-        if (isNaN(jamInt) || jamInt < 8 || jamInt > 22) {
-            return res.status(400).json({
-                message: "Jam tidak valid! Pilih jam antara 8 sampai 22"
-            });
-        }
+    type Mutation {
+        createAppointment(
+            tanggal: String!
+            jam: Int!
+            id_user: Int!
+            id_katalog: Int!
+        ): String
 
-        // CEK BENTROK
-        const [bookedRows] = await db4.promise().query(
-            `SELECT Jam FROM appointment 
-             WHERE tanggal = ? AND status != 'Dibatalkan'`,
-            [tanggal]
-        );
+        updateAppointment(
+            id: ID!
+            tanggal: String
+            jam: Int
+            id_user: Int
+            id_katalog: Int
+            status: String
+        ): String
 
-        const jamDibooked = bookedRows.map(r => r.Jam);
-        if (jamDibooked.includes(jamInt)) {
-            const semuaJam = Array.from({ length: 15 }, (_, i) => i + 8);
-            const jamTersedia = semuaJam.filter(j => !jamDibooked.includes(j));
-            return res.status(409).json({
-                message: `Jam ${jamInt}:00 pada tanggal ${tanggal} sudah dibooking!`,
-                jam_tersedia: jamTersedia.length > 0 ? jamTersedia : null,
-                saran: jamTersedia.length > 0
-                    ? `Pilih jam lain yang tersedia: ${jamTersedia.map(j => j + ':00').join(', ')}`
-                    : `Tidak ada jam tersisa pada tanggal ${tanggal}`
-            });
-        }
-        const [userData] = await db1.promise().query(
-            'SELECT nama, no_telepon FROM users WHERE id_user = ?',
-            [id_user]
-        );
-        if (userData.length === 0) {
-            return res.status(404).json({
-                message: "User tidak ditemukan"
-            });
-        }
-        const user = userData[0];
-        const [katalogData] = await db2.promise().query(
-            'SELECT * FROM katalog WHERE id_katalog = ?',
-            [id_katalog]
-        );
+        deleteAppointment(id: ID!): String
+    }
+`);
 
-        if (katalogData.length === 0) {
-            return res.status(404).json({
-                message: "Katalog tidak ditemukan"
-            });
-        }
-        const katalog = katalogData[0];
-        const [stylistData] = await db3.promise().query(
-            'SELECT * FROM Stylist WHERE id_stylist = ?',
-            [katalog.id_stylist]
-        );
-        if (stylistData.length === 0) {
-            return res.status(404).json({
-                message: "Stylist tidak ditemukan"
-            });
-        }
-        const stylist = stylistData[0];
-        const query = `
-            INSERT INTO appointment
-            (tanggal, Jam, status, id_user, id_katalog, no_telepon, layanan, nama_stylist, harga, nama_user)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-        const values = [
-            tanggal,
-            jamInt,
-            'Belum Bayar',
-            id_user,
-            id_katalog,
-            user.no_telepon,
-            katalog.nama_layanan,
-            stylist.nama,
-            stylist.harga,
-            user.nama
-        ];
-        const [result] = await db4.promise().query(query, values);
-        res.json({
-            message: `Appointment berhasil dibuat pada jam ${jamInt}:00`,
-            id: result.insertId
+const root = {
+    // --- FITUR GET ALL APPOINTMENT ---
+    getAppointments: () => {
+        return new Promise((resolve, reject) => {
+            db.query(
+                'SELECT * FROM appointment ORDER BY tanggal DESC, Jam DESC',
+                (err, results) => {
+                    if (err) reject(new Error('Gagal mengambil data appointment: ' + err.message));
+                    resolve(results);
+                }
+            );
         });
-    } catch (err) {
-        console.error('Error appointment:', err);
-        res.status(500).json({
-            message: "Server error",
-            error: err.message
+    },
+
+    // --- FITUR TAMBAH APPOINTMENT (LINTAS SERVICE) ---
+    createAppointment: ({ tanggal, jam, id_user, id_katalog }) => {
+        return new Promise((resolve, reject) => {
+            const jamInt = parseInt(jam);
+            if (isNaN(jamInt) || jamInt < 8 || jamInt > 22) {
+                return reject(new Error('Jam tidak valid! Pilih jam antara 8 sampai 22'));
+            }
+
+            // 1. Cek bentrok jam
+            db.query(
+                `SELECT Jam FROM appointment WHERE tanggal = ? AND status != 'Dibatalkan'`,
+                [tanggal],
+                (err, bookedRows) => {
+                    if (err) return reject(err);
+
+                    const jamDibooked = bookedRows.map(r => r.Jam);
+                    if (jamDibooked.includes(jamInt)) {
+                        return reject(new Error(`Jam ${jamInt}:00 pada tanggal ${tanggal} sudah dibooking!`));
+                    }
+
+                    // 2. Ambil data User dari dbUser
+                    dbUser.query('SELECT nama, no_telepon FROM users WHERE id_user = ?', [id_user], (errUser, userData) => {
+                        if (errUser) return reject(errUser);
+                        if (userData.length === 0) return reject(new Error('User tidak ditemukan'));
+                        const user = userData[0];
+
+                        // 3. Ambil data Katalog dari dbKatalog
+                        dbKatalog.query('SELECT * FROM katalog WHERE id_katalog = ?', [id_katalog], (errKatalog, katalogData) => {
+                            if (errKatalog) return reject(errKatalog);
+                            if (katalogData.length === 0) return reject(new Error('Katalog tidak ditemukan'));
+                            const katalog = katalogData[0];
+
+                            // 4. Ambil data Stylist dari dbStylist
+                            dbStylist.query('SELECT * FROM Stylist WHERE id_stylist = ?', [katalog.id_stylist], (errStylist, stylistData) => {
+                                if (errStylist) return reject(errStylist);
+                                if (stylistData.length === 0) return reject(new Error('Stylist tidak ditemukan'));
+                                const stylist = stylistData[0];
+
+                                // 5. Simpan ke database Appointment (db)
+                                const queryInsert = `
+                                    INSERT INTO appointment
+                                    (tanggal, Jam, status, id_user, id_katalog, no_telepon, layanan, nama_stylist, harga, nama_user)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                `;
+                                const values = [
+                                    tanggal, jamInt, 'Belum Bayar', id_user, id_katalog,
+                                    user.no_telepon, katalog.nama_layanan, stylist.nama, stylist.harga, user.nama
+                                ];
+
+                                db.query(queryInsert, values, (errInsert, result) => {
+                                    if (errInsert) return reject(errInsert);
+                                    resolve(`Appointment berhasil dibuat pada jam ${jamInt}:00 dengan ID: ${result.insertId}`);
+                                });
+                            });
+                        });
+                    });
+                }
+            );
+        });
+    },
+
+    // --- FITUR UPDATE APPOINTMENT ---
+    updateAppointment: ({ id, tanggal, jam, id_user, id_katalog, status }) => {
+        return new Promise((resolve, reject) => {
+            const statusValid = ['Belum Bayar', 'Lunas'];
+            if (status && !statusValid.includes(status)) {
+                return reject(new Error('Status tidak valid! Pilihan: Belum Bayar / Lunas'));
+            }
+
+            db.query('SELECT * FROM appointment WHERE id_appointment = ?', [id], (errExist, appointmentData) => {
+                if (errExist) return reject(errExist);
+                if (appointmentData.length === 0) return reject(new Error('Appointment tidak ditemukan'));
+                const existing = appointmentData[0];
+
+                // default values pakai yang lama
+                let targetUser = { id_user: existing.id_user, nama_user: existing.nama_user, no_telepon: existing.no_telepon };
+                let targetKatalog = { id_katalog: existing.id_katalog, layanan: existing.layanan, nama_stylist: existing.nama_stylist, harga: existing.harga };
+
+                const jalankanUpdate = () => {
+                    const queryUpdate = `
+                        UPDATE appointment
+                        SET tanggal = ?, Jam = ?, status = ?, id_user = ?, id_katalog = ?,
+                            no_telepon = ?, layanan = ?, nama_stylist = ?, harga = ?, nama_user = ?
+                        WHERE id_appointment = ?
+                    `;
+                    const valuesUpdate = [
+                        tanggal || existing.tanggal,
+                        jam || existing.Jam,
+                        status || existing.status,
+                        targetUser.id_user,
+                        targetKatalog.id_katalog,
+                        targetUser.no_telepon,
+                        targetKatalog.layanan,
+                        targetKatalog.nama_stylist,
+                        targetKatalog.harga,
+                        targetUser.nama_user,
+                        id
+                    ];
+
+                    db.query(queryUpdate, valuesUpdate, (errUp) => {
+                        if (errUp) return reject(errUp);
+                        resolve(`Appointment ID ${id} berhasil diperbarui!`);
+                    });
+                };
+
+                // Kondisi cek id_user baru jika dikirim
+                if (id_user) {
+                    dbUser.query('SELECT nama, no_telepon FROM users WHERE id_user = ?', [id_user], (eUser, rUser) => {
+                        if (eUser || rUser.length === 0) return reject(new Error('User tidak ditemukan'));
+                        targetUser = { id_user, nama_user: rUser[0].nama, no_telepon: rUser[0].no_telepon };
+                        
+                        if (id_katalog) {
+                            prosesKatalog();
+                        } else {
+                            jalankanUpdate();
+                        }
+                    });
+                } else if (id_katalog) {
+                    prosesKatalog();
+                } else {
+                    jalankanUpdate();
+                }
+
+                function prosesKatalog() {
+                    dbKatalog.query('SELECT * FROM katalog WHERE id_katalog = ?', [id_katalog], (eKat, rKat) => {
+                        if (eKat || rKat.length === 0) return reject(new Error('Katalog tidak ditemukan'));
+                        dbStylist.query('SELECT * FROM Stylist WHERE id_stylist = ?', [rKat[0].id_stylist], (eSty, rSty) => {
+                            if (eSty || rSty.length === 0) return reject(new Error('Stylist tidak ditemukan'));
+                            targetKatalog = { id_katalog, layanan: rKat[0].nama_layanan, nama_stylist: rSty[0].nama, harga: rSty[0].harga };
+                            jalankanUpdate();
+                        });
+                    });
+                }
+            });
+        });
+    },
+
+    // --- FITUR DELETE APPOINTMENT ---
+    deleteAppointment: ({ id }) => {
+        return new Promise((resolve, reject) => {
+            db.query('SELECT * FROM appointment WHERE id_appointment = ?', [id], (errCheck, rows) => {
+                if (errCheck) return reject(errCheck);
+                if (rows.length === 0) return reject(new Error('Appointment tidak ditemukan'));
+
+                db.query('DELETE FROM appointment WHERE id_appointment = ?', [id], (errDel) => {
+                    if (errDel) return reject(errDel);
+                    resolve(`Appointment dengan ID ${id} berhasil dihapus`);
+                });
+            });
         });
     }
-});
-
-// --- UPDATE APPOINTMENT ---
-const updateAppointment = async (_, { id, tanggal, jam, id_user, id_katalog, status }) => {
-    const statusValid = ['Belum Bayar', 'Lunas'];
-    if (status && !statusValid.includes(status)) {
-        throw new Error('Status tidak valid! Pilihan: Belum Bayar / Lunas');
-    }
-
-    const [appointmentData] = await db.promise().query(
-        'SELECT * FROM appointment WHERE id_appointment = ?', [id]
-    );
-    if (appointmentData.length === 0) throw new Error('Appointment tidak ditemukan');
-    const existing = appointmentData[0];
-
-    let userFields = {
-        id_user: existing.id_user,
-        nama_user: existing.nama_user,
-        no_telepon: existing.no_telepon
-    };
-    if (id_user) {
-        const [userData] = await dbUser.promise().query(
-            'SELECT nama, no_telepon FROM users WHERE id_user = ?', [id_user]
-        );
-        if (userData.length === 0) throw new Error('User tidak ditemukan');
-        userFields = { id_user, nama_user: userData[0].nama, no_telepon: userData[0].no_telepon };
-    }
-
-    let katalogFields = {
-        id_katalog: existing.id_katalog,
-        layanan: existing.layanan,
-        nama_stylist: existing.nama_stylist,
-        harga: existing.harga
-    };
-    if (id_katalog) {
-        const [katalogData] = await dbKatalog.promise().query(
-            'SELECT * FROM katalog WHERE id_katalog = ?', [id_katalog]
-        );
-        if (katalogData.length === 0) throw new Error('Katalog tidak ditemukan');
-
-        const [stylistData] = await dbStylist.promise().query(
-            'SELECT * FROM Stylist WHERE id_stylist = ?', [katalogData[0].id_stylist]
-        );
-        if (stylistData.length === 0) throw new Error('Stylist tidak ditemukan');
-
-        katalogFields = {
-            id_katalog,
-            layanan: katalogData[0].nama_layanan,
-            nama_stylist: stylistData[0].nama,
-            harga: stylistData[0].harga
-        };
-    }
-
-    await db.promise().query(`
-        UPDATE appointment
-        SET tanggal = ?, Jam = ?, status = ?, id_user = ?, id_katalog = ?,
-            no_telepon = ?, layanan = ?, nama_stylist = ?, harga = ?, nama_user = ?
-        WHERE id_appointment = ?
-    `, [
-        tanggal      || existing.tanggal,
-        jam          || existing.Jam,
-        status       || existing.status,
-        userFields.id_user,
-        katalogFields.id_katalog,
-        userFields.no_telepon,
-        katalogFields.layanan,
-        katalogFields.nama_stylist,
-        katalogFields.harga,
-        userFields.nama_user,
-        id
-    ]);
-
-    return {
-        id_appointment: id,
-        tanggal: tanggal || existing.tanggal,
-        jam: jam || existing.Jam,
-        status: status || existing.status,
-        ...userFields,
-        ...katalogFields
-    };
 };
 
-// --- DELETE APPOINTMENT ---
-const deleteAppointment = async (_, { id }) => {
-    const [appointmentData] = await db.promise().query(
-        'SELECT * FROM appointment WHERE id_appointment = ?', [id]
-    );
-    if (appointmentData.length === 0) throw new Error('Appointment tidak ditemukan');
+// ================= ENDPOINT GRAPHQL =================
+app.use("/graphql", graphqlHTTP({
+    schema: schema,
+    rootValue: root,
+    graphiql: true // Ini otomatis menyalakan UI GraphiQL bawaan express-graphql
+}));
 
-    await db.promise().query(
-        'DELETE FROM appointment WHERE id_appointment = ?', [id]
-    );
-
-    return { message: 'Appointment berhasil dihapus', id_terhapus: id };
-};
-
-module.exports = { updateAppointment, deleteAppointment };
-//JALANKAN SERVER
-const PORT = 3004;
-app.listen(PORT, () => {
-    console.log(`Server KicauSalon jalan di http://localhost:${PORT}`);
-    console.log('Service Appointment berjalan dengan database appointment_db');
+// ================= RUN SERVER (Port 3004) =================
+app.listen(3004, () => {
+    console.log("GraphQL Server Appointment berjalan di http://localhost:3004/graphql");
 });
