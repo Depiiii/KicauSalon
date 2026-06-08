@@ -39,7 +39,8 @@ const LoginType = new GraphQLObjectType({
     fields: () => ({
         token: { type: GraphQLString },
         nama: { type: GraphQLString },
-        role: { type: GraphQLString }
+        role: { type: GraphQLString },
+        id_user: { type: GraphQLInt }
     })
 });
 
@@ -59,7 +60,28 @@ const RootQuery = new GraphQLObjectType({
 
                 return rows;
             }
+        },
+
+        user: {
+            type: UserType,
+
+            args: {
+                id_user: {
+                    type: new GraphQLNonNull(GraphQLInt)
+                }
+            },
+
+            async resolve(parent, args) {
+
+                const [rows] = await db.promise().query(
+                    'SELECT * FROM users WHERE id_user = ?',
+                    [args.id_user]
+                );
+
+                return rows[0];
+            }
         }
+
     }
 });
 
@@ -167,8 +189,84 @@ const Mutation = new GraphQLObjectType({
                 return {
                     token: token,
                     nama: user.nama,
-                    role: user.role
+                    role: user.role,
+                    id_user: user.id_user
                 };
+            }
+        },
+        updateUser: {
+            type: UserType,
+
+            args: {
+                id_user: {
+                    type: new GraphQLNonNull(GraphQLInt)
+                },
+                nama: {
+                    type: GraphQLString
+                },
+                email: {
+                    type: GraphQLString
+                },
+                password: {
+                    type: GraphQLString
+                },
+                no_telepon: {
+                    type: GraphQLString
+                }
+            },
+
+            async resolve(parent, args) {
+
+                const [userLama] = await db.promise().query(
+                    'SELECT * FROM users WHERE id_user = ?',
+                    [args.id_user]
+                );
+
+                if (userLama.length === 0) {
+                    throw new Error('User tidak ditemukan');
+                }
+
+                let passwordBaru = userLama[0].password;
+
+                if (args.password) {
+                    passwordBaru = await bcrypt.hash(
+                        args.password,
+                        10
+                    );
+                }
+
+                await db.promise().query(
+                    `
+            UPDATE users
+            SET
+                nama = ?,
+                email = ?,
+                password = ?,
+                no_telepon = ?
+            WHERE id_user = ?
+            `,
+                    [
+                        args.nama || userLama[0].nama,
+                        args.email || userLama[0].email,
+                        passwordBaru,
+                        args.no_telepon || userLama[0].no_telepon,
+                        args.id_user
+                    ]
+                );
+                const [cekEmail] = await db.promise().query(
+                    'SELECT * FROM users WHERE email = ? AND id_user != ?',
+                    [args.email, args.id_user]
+                );
+
+                if (cekEmail.length > 0) {
+                    throw new Error('Email sudah digunakan');
+                }
+                const [userBaru] = await db.promise().query(
+                    'SELECT * FROM users WHERE id_user = ?',
+                    [args.id_user]
+                );
+
+                return userBaru[0];
             }
         }
     }

@@ -35,6 +35,7 @@ const schema = buildSchema(`
 
     type Query {
         getAppointments: [Appointment]
+        riwayatUser(id_user: Int!): [Appointment]
     }
 
     type Mutation {
@@ -222,8 +223,42 @@ const root = {
                 });
             });
         });
-    }
+    },
+
+    // --- FITUR RIWAYAT APPOINTMENT USER ---
+    riwayatUser: ({ id_user }) => {
+
+    return new Promise((resolve, reject) => {
+
+        db.query(
+            `
+            SELECT *
+            FROM appointment
+            WHERE id_user = ?
+            AND status = 'Lunas'
+            ORDER BY tanggal DESC, Jam DESC
+            `,
+            [id_user],
+            (err, results) => {
+
+                if (err) {
+                    return reject(
+                        new Error(
+                            'Gagal mengambil riwayat appointment'
+                        )
+                    );
+                }
+
+                resolve(results);
+            }
+        );
+
+    });
+
+},
 };
+
+
 
 // ================= ENDPOINT GRAPHQL =================
 app.use("/graphql", graphqlHTTP({

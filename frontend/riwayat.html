@@ -1,4 +1,4 @@
-!DOCTYPE html>
+
 
 <html class="dark" lang="id">
 
@@ -15,6 +15,13 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
+
+    <script src="script-appointment.js"></script>
+    <script>
+        window.onload = function () {
+            loadRiwayat();
+        }
+    </script>
     <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -146,14 +153,15 @@
     <header class="fixed top-0 w-full bg-surface dark:bg-surface border-b border-outline-variant/10 z-50">
         <div class="flex justify-between items-center h-20 px-margin-desktop max-w-container-max mx-auto">
             <!-- Brand Logo -->
-            <a class="font-display-lg text-display-lg text-primary dark:text-primary tracking-tight" href="dashboard.html">
+            <a class="font-display-lg text-display-lg text-primary dark:text-primary tracking-tight"
+                href="dashboard.html">
                 KicauSalon
             </a>
             <!-- Navigation Links -->
             <nav class="hidden md:flex items-center space-x-8">
                 <a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md"
                     href="katalog.html">Katalog</a>
-                 <a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md"
+                <a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md"
                     href="stylist.html">Stylist</a>
                 <a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md"
                     href="appointment.html">Appointment</a>
@@ -172,6 +180,70 @@
             </div>
         </div>
     </header>
+    <main class="pt-32 px-margin-desktop max-w-container-max mx-auto">
 
+        <div class="bg-surface-container rounded-xl border border-outline-variant p-8">
+
+            <div class="mb-8">
+                <h1 class="font-headline-md text-headline-md text-primary">
+                    Riwayat Appointment
+                </h1>
+
+                <p class="text-text-muted mt-2">
+                    Daftar appointment yang telah selesai dan lunas.
+                </p>
+            </div>
+
+            <div class="overflow-x-auto">
+
+                <table class="w-full">
+
+                    <thead>
+                        <tr class="border-b border-outline-variant">
+
+                            <th class="text-left py-4 px-4 text-secondary uppercase text-label-sm">
+                                ID Appointment
+                            </th>
+
+                            <th class="text-left py-4 px-4 text-secondary uppercase text-label-sm">
+                                Tanggal
+                            </th>
+
+                            <th class="text-left py-4 px-4 text-secondary uppercase text-label-sm">
+                                Jam
+                            </th>
+
+                            <th class="text-left py-4 px-4 text-secondary uppercase text-label-sm">
+                                Layanan
+                            </th>
+
+                            <th class="text-left py-4 px-4 text-secondary uppercase text-label-sm">
+                                Stylist
+                            </th>
+
+                            <th class="text-left py-4 px-4 text-secondary uppercase text-label-sm">
+                                Total Harga
+                            </th>
+
+                            <th class="text-left py-4 px-4 text-secondary uppercase text-label-sm">
+                                Status
+                            </th>
+
+                        </tr>
+                    </thead>
+
+                    <tbody id="riwayatTable">
+
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </main>
 </body>
+
 </html>
