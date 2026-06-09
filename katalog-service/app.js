@@ -31,20 +31,21 @@ const schema = buildSchema(`
 
   # Tipe data Katalog (dengan data join Stylist)
   type Katalog {
-    id_katalog: ID!
-    nama_layanan: String!
-    nama_stylist: String
-    status: String
-    harga: Float
-  }
+  id_katalog: ID!
+  nama_layanan: String!
+  harga: Int!
+  nama_stylist: String
+  status: String
+}
 
   # Tipe data hasil operasi tambah / edit
-  type KatalogMutationResult {
+    type KatalogMutationResult {
     message: String!
     id_katalog: ID!
     id_stylist: ID
     nama_layanan: String
-  }
+    harga: Int
+}
 
   # Tipe data hasil operasi delete
   type DeleteResult {
@@ -67,17 +68,19 @@ const schema = buildSchema(`
   # ---- MUTATION ----
   type Mutation {
     # Tambah katalog baru
-    addKatalog(
+      addKatalog(
       id_stylist: ID!
       nama_layanan: String!
-    ): KatalogMutationResult!
+      harga: Int!
+): KatalogMutationResult!
 
     # Update katalog berdasarkan id
-    updateKatalog(
+      updateKatalog(
       id_katalog: ID!
       id_stylist: ID!
       nama_layanan: String!
-    ): KatalogMutationResult!
+      harga: Int!
+): KatalogMutationResult!
 
     # Hapus katalog berdasarkan id
     deleteKatalog(
@@ -103,9 +106,9 @@ const root = {
        return {
     id_katalog: kt.id_katalog,
     nama_layanan: kt.nama_layanan,
-    nama_stylist: st ? st.nama : '-',
+    nama_stylist: st ? st.nama_stylist : '-',
     status: st ? st.status : '-',
-    harga: st ? st.harga : 0
+    harga: kt.harga
 };
       });
     } catch (err) {
@@ -142,9 +145,9 @@ const root = {
     return {
       id_katalog: kt.id_katalog,
       nama_layanan: kt.nama_layanan,
-      nama_stylist: st ? st.nama : '-',
+      nama_stylist: st ? st.nama_stylist : '-',
       status: st ? st.status : '-',
-      harga: st ? st.harga : 0
+      harga: kt.harga
     };
 
   } catch (err) {
@@ -153,14 +156,14 @@ const root = {
   }
 },
 
-    addKatalog: async ({ id_stylist, nama_layanan }) => {
+    addKatalog: async ({ id_stylist, nama_layanan, harga }) => {
     if (!id_stylist || !nama_layanan) {
       throw new Error('ID Stylist dan nama layanan harus diisi');
     }
 
     const stylistCheck = await query(
       db1,
-      'SELECT id_stylist FROM Stylist WHERE id_stylist = ?',
+      'SELECT id_stylist FROM stylist WHERE id_stylist = ?',
       [id_stylist]
     );
 
@@ -170,8 +173,8 @@ const root = {
 
       const result = await query(
       db,
-      'INSERT INTO katalog (id_stylist, nama_layanan) VALUES (?, ?)',
-      [id_stylist, nama_layanan]
+      'INSERT INTO katalog (id_stylist, nama_layanan, harga) VALUES (?, ?, ?)',
+      [id_stylist, nama_layanan, harga]
     );
 
     return {
@@ -182,15 +185,15 @@ const root = {
     };
   },
 
-    updateKatalog: async ({ id_katalog, id_stylist, nama_layanan }) => {
+    updateKatalog: async ({ id_katalog, id_stylist, nama_layanan, harga }) => {
     if (!id_stylist || !nama_layanan) {
-      throw new Error('ID Stylist dan nama layanan harus diisi');
+      throw new Error('ID Stylist, nama layanan, dan harga harus diisi');
     }
 
     // Validasi stylist ada
     const stylistCheck = await query(
       db1,
-      'SELECT id_stylist FROM Stylist WHERE id_stylist = ?',
+      'SELECT id_stylist FROM stylist WHERE id_stylist = ?',
       [id_stylist]
     );
 
@@ -201,8 +204,8 @@ const root = {
     // Update katalog
     const result = await query(
       db,
-      'UPDATE katalog SET id_stylist = ?, nama_layanan = ? WHERE id_katalog = ?',
-      [id_stylist, nama_layanan, id_katalog]
+      'UPDATE katalog SET id_stylist = ?, nama_layanan = ?, harga = ? WHERE id_katalog = ?',
+      [id_stylist, nama_layanan, harga, id_katalog]
     );
 
     if (result.affectedRows === 0) {

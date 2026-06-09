@@ -17,7 +17,7 @@ app.use(express.json());
 const schema = buildSchema(`
     type Stylist {
         id_stylist: ID!
-        nama: String
+        nama_stylist: String
         status: String
         harga: Int
     }
@@ -30,14 +30,14 @@ const schema = buildSchema(`
     type Mutation {
         addStylist(
             id_stylist: ID!
-            nama: String!
+            nama_stylist: String!
             status: String!
             harga: Int!
         ): Stylist
 
         updateStylist(
             id_stylist: ID!
-            nama: String
+            nama_stylist: String
             status: String
             harga: Int
         ): Stylist
@@ -84,24 +84,24 @@ getStylistById: ({ id_stylist }) => {
 // --- FITUR TAMBAH STYLIST ---
 addStylist: ({
         id_stylist,
-        nama,
+        nama_stylist,
         status,
         harga
     }) => {
         return new Promise((resolve, reject) => {
 
             const sql =
-                "INSERT INTO Stylist (id_stylist, nama, status, harga) VALUES (?, ?, ?, ?)";
+                "INSERT INTO Stylist (id_stylist, nama_stylist, status, harga) VALUES (?, ?, ?, ?)";
 
             db.query(
                 sql,
-                [id_stylist, nama, status, harga],
+                [id_stylist, nama_stylist, status, harga],
                 (err) => {
                     if (err) reject(err);
 
                     resolve({
                         id_stylist,
-                        nama,
+                        nama_stylist,
                         status,
                         harga
                     });
@@ -138,7 +138,7 @@ deleteStylist: ({ id_stylist }) => {
 // --- FITUR EDIT STYLIST ---
 updateStylist: ({
         id_stylist,
-        nama,
+        nama_stylist,
         status,
         harga
     }) => {
@@ -147,7 +147,7 @@ updateStylist: ({
             const sql = `
                 UPDATE Stylist
                 SET
-                    nama = COALESCE(?, nama),
+                    nama_stylist = COALESCE(?, nama_stylist),
                     status = COALESCE(?, status),
                     harga = COALESCE(?, harga)
                 WHERE id_stylist = ?
@@ -155,7 +155,7 @@ updateStylist: ({
 
             db.query(
                 sql,
-                [nama, status, harga, id_stylist],
+                [nama_stylist, status, harga, id_stylist],
                 (err) => {
                     if (err) reject(err);
 
