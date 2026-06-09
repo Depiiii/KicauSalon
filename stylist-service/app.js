@@ -138,7 +138,7 @@ deleteStylist: ({ id_stylist }) => {
 // --- FITUR EDIT STYLIST ---
 updateStylist: ({
         id_stylist,
-        _stylist,
+        nama_stylist,
         status,
         harga
     }) => {
