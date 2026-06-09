@@ -204,7 +204,7 @@
 
                 <thead class="bg-[#362623] text-[#9d8d8a] uppercase text-sm">
                     <tr>
-                        <th class="text-left p-5">Nama</th>
+                        <th class="text-left p-5">Nama Stylist</th>
                         <th class="text-left p-5">Status</th>
                         <th class="text-right p-5">Harga</th>
                     </tr>
@@ -246,7 +246,7 @@
                                 query {
                                     getAllStylist {
                                         id_stylist
-                                        nama
+                                        nama_stylist
                                         status
                                         harga
                                     }
@@ -301,7 +301,7 @@
             data.forEach(stylist => {
 
                 const initials =
-                    stylist.nama
+                    stylist.nama_stylist
                     .split(" ")
                     .map(word => word[0])
                     .join("")
@@ -334,7 +334,7 @@
                                 </div>
 
                                 <span class="text-white text-lg">
-                                    ${stylist.nama}
+                                    ${stylist.nama_stylist}
                                 </span>
 
                             </div>
@@ -373,7 +373,7 @@
                     const filtered =
                         allStylist.filter(
                             stylist =>
-                            stylist.nama
+                            stylist.nama_stylist
                             .toLowerCase()
                             .includes(keyword)
                         );
